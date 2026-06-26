@@ -1,0 +1,31 @@
+{
+  "name": "@tabstack/integrations-core",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Shared, framework-agnostic core for Tabstack TypeScript integrations. Not published.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tabstack/sdk": "^2.6.1"
+  },
+  "peerDependencies": {
+    "zod": "^3.23.8 || ^4.0.0"
+  },
+  "devDependencies": {
+    "zod": "^3.23.8"
+  }
+}
