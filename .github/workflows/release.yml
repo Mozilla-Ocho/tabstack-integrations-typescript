@@ -1,0 +1,59 @@
+name: Release
+
+# Changesets flow:
+#   1. Push to main with changeset files -> action opens/updates a
+#      "Version Packages" PR (bumps versions, writes CHANGELOG).
+#   2. Merge that PR -> action runs the `release` script, publishing every
+#      bumped package to npm via OIDC trusted publishing (no NPM_TOKEN).
+# CI (ci.yml) gates merges to main, so published commits are already green.
+on:
+  push:
+    branches: [main]
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: Version / Publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # push the "Version Packages" PR / tags
+      pull-requests: write # open/update the version PR
+      id-token: write # OIDC token for npm trusted publishing
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Trusted publishing requires npm >= 11.5.1. `changeset publish` shells
+      # out to `npm publish`, so the npm on PATH must be current.
+      - name: Upgrade npm for OIDC trusted publishing
+        run: npm install -g npm@latest
+
+      - name: Create Release PR or Publish
+        uses: changesets/action@v1
+        with:
+          version: pnpm changeset version
+          publish: pnpm release
+          commit: "chore: version packages"
+          title: "chore: version packages"
+        env:
+          # GITHUB_TOKEN only opens the version PR / pushes tags. Publishing
+          # authenticates via OIDC trusted publishing configured per package
+          # on npmjs.com — no NPM_TOKEN.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_CONFIG_PROVENANCE: "true"

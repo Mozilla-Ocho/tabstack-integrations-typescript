@@ -4,6 +4,15 @@
   "description": "Tabstack tools for LangChain.js. Schema-enforced web extraction and research, backed by the official Tabstack SDK.",
   "author": "Tabstack",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mozilla-Ocho/tabstack-integrations-typescript.git",
+    "directory": "packages/langchain"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
