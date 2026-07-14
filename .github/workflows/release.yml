@@ -1,14 +1,18 @@
 name: Release
 
-# Changesets flow:
-#   1. Push to main with changeset files -> action opens/updates a
-#      "Version Packages" PR (bumps versions, writes CHANGELOG).
-#   2. Merge that PR -> action runs the `release` script, publishing every
-#      bumped package to npm via OIDC trusted publishing (no NPM_TOKEN).
-# CI (ci.yml) gates merges to main, so published commits are already green.
+# Tag-driven publishing. Create a GitHub Release whose tag names the target:
+#   langchain-vX.Y.Z  -> publish only @tabstack/langchain at X.Y.Z
+#   ai-vX.Y.Z         -> publish only @tabstack/ai at X.Y.Z
+#   vX.Y.Z            -> publish both at X.Y.Z
+#
+# The tag's version is written into the target package.json(s) at build time
+# (not committed back); the GitHub Release is the source of truth. Publishing
+# uses npm OIDC trusted publishing (no NPM_TOKEN), configured per package on
+# npmjs.com, with provenance (each package's publishConfig sets provenance:true).
+# Prerelease versions (e.g. 1.2.0-beta.1) publish under the `next` dist-tag.
 on:
-  push:
-    branches: [main]
+  release:
+    types: [published]
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
@@ -16,20 +20,62 @@ permissions:
   contents: read
 
 jobs:
-  release:
-    name: Version / Publish
+  publish:
+    name: Publish
     runs-on: ubuntu-latest
     permissions:
-      contents: write # push the "Version Packages" PR / tags
-      pull-requests: write # open/update the version PR
-      id-token: write # OIDC token for npm trusted publishing
+      contents: read
+      id-token: write # OIDC token for npm trusted publishing + provenance
     steps:
+      - name: Parse release tag
+        id: tag
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+
+          # Split an optional "<package>-" prefix from the "vX.Y.Z" version.
+          if [[ "$TAG" =~ ^([a-z0-9-]+)-v(.+)$ ]]; then
+            NAME="${BASH_REMATCH[1]}"
+            VERSION="${BASH_REMATCH[2]}"
+          elif [[ "$TAG" =~ ^v(.+)$ ]]; then
+            NAME=""
+            VERSION="${BASH_REMATCH[1]}"
+          else
+            echo "::error::Tag '$TAG' must look like vX.Y.Z, langchain-vX.Y.Z, or ai-vX.Y.Z"
+            exit 1
+          fi
+
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-+].+)?$ ]]; then
+            echo "::error::'$VERSION' (from tag '$TAG') is not a valid semver version"
+            exit 1
+          fi
+
+          # Map the tag prefix to the pnpm package(s) to publish.
+          case "$NAME" in
+            "")        PKGS="@tabstack/langchain @tabstack/ai" ;;
+            langchain) PKGS="@tabstack/langchain" ;;
+            ai)        PKGS="@tabstack/ai" ;;
+            *)         echo "::error::Unknown package '$NAME' in tag '$TAG' (expected 'langchain' or 'ai')"; exit 1 ;;
+          esac
+
+          # Prerelease versions must not claim the default `latest` dist-tag.
+          if [[ "$VERSION" == *-* ]]; then NPM_TAG="next"; else NPM_TAG="latest"; fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "pkgs=$PKGS" >> "$GITHUB_OUTPUT"
+          echo "npm_tag=$NPM_TAG" >> "$GITHUB_OUTPUT"
+          echo "Releasing [$PKGS] at $VERSION (dist-tag: $NPM_TAG)"
+
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
 
+      # No registry-url here on purpose: it would make setup-node write an
+      # .npmrc with `_authToken=${NODE_AUTH_TOKEN}`, which breaks OIDC trusted
+      # publishing (pnpm/pnpm#11513). OIDC needs no token or .npmrc auth line.
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -39,21 +85,26 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Trusted publishing requires npm >= 11.5.1. `changeset publish` shells
-      # out to `npm publish`, so the npm on PATH must be current.
-      - name: Upgrade npm for OIDC trusted publishing
-        run: npm install -g npm@latest
+      - name: Set target versions
+        run: |
+          set -euo pipefail
+          for PKG in ${{ steps.tag.outputs.pkgs }}; do
+            pnpm --filter "$PKG" exec npm pkg set version="${{ steps.tag.outputs.version }}"
+          done
 
-      - name: Create Release PR or Publish
-        uses: changesets/action@v1
-        with:
-          version: pnpm changeset version
-          publish: pnpm release
-          commit: "chore: version packages"
-          title: "chore: version packages"
-        env:
-          # GITHUB_TOKEN only opens the version PR / pushes tags. Publishing
-          # authenticates via OIDC trusted publishing configured per package
-          # on npmjs.com — no NPM_TOKEN.
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_CONFIG_PROVENANCE: "true"
+      # core builds first (workspace dependency of the adapters); `pnpm -r`
+      # builds in topological order.
+      - name: Build
+        run: pnpm build
+
+      # pnpm publish rewrites `workspace:*` deps to real versions and does OIDC
+      # trusted publishing natively. --access/--provenance come from each
+      # package's publishConfig. --no-git-checks: the tree carries the in-place
+      # version bump and we're on a detached tag.
+      - name: Publish to npm
+        run: |
+          set -euo pipefail
+          for PKG in ${{ steps.tag.outputs.pkgs }}; do
+            echo "Publishing $PKG"
+            pnpm --filter "$PKG" publish --no-git-checks --tag "${{ steps.tag.outputs.npm_tag }}"
+          done

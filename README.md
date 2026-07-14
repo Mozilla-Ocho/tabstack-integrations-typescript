@@ -39,12 +39,12 @@ pnpm test       # vitest per package
 pnpm lint       # biome
 ```
 
-Versioning and publishing use [changesets](https://github.com/changesets/changesets). `core` is
-private and excluded from release.
+Releases are driven by GitHub Release tags (`langchain-vX.Y.Z`, `ai-vX.Y.Z`, or `vX.Y.Z` for both).
+`core` is private and excluded from release. See [PUBLISHING.md](./PUBLISHING.md).
 
 ## Tooling choices
 
 - **tsup** for builds: zero-config dual ESM/CJS output with `.d.ts` generation via a tiny per-package
   config. Mature and the de facto standard for small TypeScript libraries.
 - **biome** for lint + format: one fast binary, one root config, no ESLint/Prettier plugin sprawl.
-- **vitest** for tests, **changesets** for release.
+- **vitest** for tests; releases are cut from **GitHub Release** tags (see [PUBLISHING.md](./PUBLISHING.md)).

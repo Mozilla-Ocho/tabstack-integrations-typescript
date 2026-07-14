@@ -11,7 +11,7 @@ npm first.
 |---------|----------|-------|
 | `packages/langchain` | `@tabstack/langchain` | published |
 | `packages/vercel-ai` | `@tabstack/ai` | published |
-| `packages/core` | `@tabstack/integrations-core` | **not published** — `private: true`, changeset-ignored; bundled into the adapters |
+| `packages/core` | `@tabstack/integrations-core` | **not published** — `private: true`; bundled into the adapters |
 
 ## One-time: register the trusted publisher (per published package)
 
@@ -41,12 +41,30 @@ npm publish --access public
 After that first publish, register the trusted publisher (above) and all
 subsequent releases go through CI with zero tokens.
 
-## Ongoing releases (Changesets)
+## Ongoing releases (GitHub Releases)
 
-1. Add a changeset: `pnpm changeset` (pick packages + bump).
-2. Merge to `main`. `release.yml` opens a **"Version Packages"** PR.
-3. Merge that PR. CI runs `pnpm release` (`pnpm build && changeset publish`),
-   publishing every bumped package to npm over OIDC with provenance.
+Releases are driven by GitHub Release tags. The tag names which package(s) to
+publish and at what version:
+
+| Tag              | Publishes                          |
+|------------------|------------------------------------|
+| `langchain-vX.Y.Z` | `@tabstack/langchain` at `X.Y.Z`   |
+| `ai-vX.Y.Z`        | `@tabstack/ai` at `X.Y.Z`          |
+| `vX.Y.Z`           | both adapters at `X.Y.Z`           |
+
+To cut a release:
+
+1. Create a **GitHub Release** with a tag in one of the forms above (e.g.
+   `langchain-v0.2.0`). Write the changelog in the release notes.
+2. On publish, `release.yml` parses the tag, writes the version into the target
+   `package.json`(s), builds, and runs `pnpm publish` (which rewrites
+   `workspace:*` deps to real versions) over OIDC trusted publishing with
+   provenance.
+
+Version numbers live in the release tags, not committed back to `package.json`
+(the checked-in versions may lag the published ones). Prerelease versions
+(e.g. `v1.2.0-beta.1`) publish under the `next` dist-tag; stable versions under
+`latest`.
 
 ## Notes
 

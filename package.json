@@ -14,13 +14,10 @@
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r --if-present test",
     "lint": "biome check .",
-    "format": "biome format --write .",
-    "changeset": "changeset",
-    "release": "pnpm build && changeset publish"
+    "format": "biome format --write ."
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
-    "@changesets/cli": "^2.27.10",
     "@types/node": "^22.10.0",
     "tsup": "^8.3.5",
     "typescript": "^5.7.2",
