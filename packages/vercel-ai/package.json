@@ -1,6 +1,6 @@
 {
   "name": "@tabstack/ai",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Tabstack tools for the Vercel AI SDK. Schema-enforced web extraction and research, backed by the official Tabstack SDK.",
   "author": "Tabstack",
   "license": "MIT",
@@ -24,13 +24,24 @@
       "require": "./dist/index.cjs"
     }
   },
-  "files": ["dist", "README.md"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
-  "keywords": ["tabstack", "vercel", "ai-sdk", "tools", "agent", "web-scraping", "extraction"],
+  "keywords": [
+    "tabstack",
+    "vercel",
+    "ai-sdk",
+    "tools",
+    "agent",
+    "web-scraping",
+    "extraction"
+  ],
   "dependencies": {
     "@tabstack/sdk": "^2.6.1"
   },
