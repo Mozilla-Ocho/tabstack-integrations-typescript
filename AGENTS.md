@@ -83,4 +83,4 @@ install is a harmless warning; esbuild and biome get their binaries from optiona
 ## Pre-publish
 
 - Confirm the `@tabstack/sdk` version pin (`^2.6.1`) matches the intended release line.
-- Releases use changesets; `core` is excluded (private). Publish auth/workflow is set up separately.
+- Releases are cut from GitHub Release tags (`langchain-vX.Y.Z`, `ai-vX.Y.Z`, or `vX.Y.Z`); `core` is excluded (private). See PUBLISHING.md.
