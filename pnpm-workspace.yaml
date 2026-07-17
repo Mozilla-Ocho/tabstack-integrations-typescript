@@ -1,8 +1,11 @@
 packages:
   - "packages/*"
+  - "apps/*"
 allowBuilds:
   '@biomejs/biome': true
   esbuild: true
+minimumReleaseAgeExclude:
+  - eve
 onlyBuiltDependencies:
   - "@biomejs/biome"
   - esbuild
