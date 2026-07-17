@@ -11,6 +11,7 @@ extract and research capabilities as native tools for a given agent framework.
 | `@tabstack/integrations-core` | No (private) | Shared client, Zod schemas, tool bodies, error mapping, and types. Framework-agnostic. |
 | `@tabstack/langchain` | Yes | LangChain.js adapter. Wraps core schemas and bodies in `tool()` from `@langchain/core`. |
 | `@tabstack/ai` | Yes | Vercel AI SDK adapter. Wraps core schemas and bodies in `tool()` from `ai`. |
+| `@tabstack/eve` | Yes | [eve](https://vercel.com/eve) adapter. Wraps core schemas and bodies in `defineTool()` from `eve/tools`. |
 
 ## Design
 

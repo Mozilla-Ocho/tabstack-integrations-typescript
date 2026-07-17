@@ -11,12 +11,13 @@ npm first.
 |---------|----------|-------|
 | `packages/langchain` | `@tabstack/langchain` | published |
 | `packages/vercel-ai` | `@tabstack/ai` | published |
+| `packages/eve` | `@tabstack/eve` | published |
 | `packages/core` | `@tabstack/integrations-core` | **not published** — `private: true`; bundled into the adapters |
 
 ## One-time: register the trusted publisher (per published package)
 
 npm configures trusted publishers in the web UI only (no CLI/API). For **each**
-published package (`@tabstack/langchain`, `@tabstack/ai`):
+published package (`@tabstack/langchain`, `@tabstack/ai`, `@tabstack/eve`):
 
 1. Go to `https://www.npmjs.com/package/<name>/access` (Settings → Trusted Publisher).
 2. Choose **GitHub Actions**.
@@ -50,7 +51,8 @@ publish and at what version:
 |------------------|------------------------------------|
 | `langchain-vX.Y.Z` | `@tabstack/langchain` at `X.Y.Z`   |
 | `ai-vX.Y.Z`        | `@tabstack/ai` at `X.Y.Z`          |
-| `vX.Y.Z`           | both adapters at `X.Y.Z`           |
+| `eve-vX.Y.Z`       | `@tabstack/eve` at `X.Y.Z`         |
+| `vX.Y.Z`           | all adapters at `X.Y.Z`            |
 
 To cut a release:
 

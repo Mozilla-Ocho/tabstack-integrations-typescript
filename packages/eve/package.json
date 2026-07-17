@@ -1,0 +1,51 @@
+{
+  "name": "@tabstack/eve",
+  "version": "0.1.0",
+  "description": "Tabstack tools for Vercel's eve agent framework. Schema-enforced web extraction and research, backed by the official Tabstack SDK.",
+  "author": "Tabstack",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mozilla-Ocho/tabstack-integrations-typescript.git",
+    "directory": "packages/eve"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "keywords": ["tabstack", "eve", "vercel", "tools", "agent", "web-scraping", "extraction"],
+  "dependencies": {
+    "@tabstack/sdk": "^2.6.1",
+    "zod-to-json-schema": "^3.24.0"
+  },
+  "peerDependencies": {
+    "eve": ">=0.24.0",
+    "zod": "^3.23.8 || ^4.0.0"
+  },
+  "devDependencies": {
+    "@tabstack/integrations-core": "workspace:*",
+    "eve": "^0.24.6",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8",
+    "zod": "^3.23.8",
+    "zod4": "npm:zod@^4.0.0"
+  }
+}

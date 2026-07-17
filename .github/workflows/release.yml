@@ -3,7 +3,8 @@ name: Release
 # Tag-driven publishing. Create a GitHub Release whose tag names the target:
 #   langchain-vX.Y.Z  -> publish only @tabstack/langchain at X.Y.Z
 #   ai-vX.Y.Z         -> publish only @tabstack/ai at X.Y.Z
-#   vX.Y.Z            -> publish both at X.Y.Z
+#   eve-vX.Y.Z        -> publish only @tabstack/eve at X.Y.Z
+#   vX.Y.Z            -> publish all at X.Y.Z
 #
 # The tag's version is written into the target package.json(s) at build time
 # (not committed back); the GitHub Release is the source of truth. Publishing
@@ -42,7 +43,7 @@ jobs:
             NAME=""
             VERSION="${BASH_REMATCH[1]}"
           else
-            echo "::error::Tag '$TAG' must look like vX.Y.Z, langchain-vX.Y.Z, or ai-vX.Y.Z"
+            echo "::error::Tag '$TAG' must look like vX.Y.Z, langchain-vX.Y.Z, ai-vX.Y.Z, or eve-vX.Y.Z"
             exit 1
           fi
 
@@ -53,10 +54,11 @@ jobs:
 
           # Map the tag prefix to the pnpm package(s) to publish.
           case "$NAME" in
-            "")        PKGS="@tabstack/langchain @tabstack/ai" ;;
+            "")        PKGS="@tabstack/langchain @tabstack/ai @tabstack/eve" ;;
             langchain) PKGS="@tabstack/langchain" ;;
             ai)        PKGS="@tabstack/ai" ;;
-            *)         echo "::error::Unknown package '$NAME' in tag '$TAG' (expected 'langchain' or 'ai')"; exit 1 ;;
+            eve)       PKGS="@tabstack/eve" ;;
+            *)         echo "::error::Unknown package '$NAME' in tag '$TAG' (expected 'langchain', 'ai', or 'eve')"; exit 1 ;;
           esac
 
           # Prerelease versions must not claim the default `latest` dist-tag.
@@ -82,8 +84,11 @@ jobs:
           node-version: 22
           cache: pnpm
 
+      # Only the publishable packages (and their deps) are needed to build and
+      # publish. Scoping the install keeps the demo apps under apps/* and their
+      # heavy deps (eve, ai) out of the trusted-publishing environment.
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --filter "./packages/*..."
 
       - name: Set target versions
         run: |
