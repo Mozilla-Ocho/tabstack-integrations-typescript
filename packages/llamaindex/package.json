@@ -1,0 +1,49 @@
+{
+  "name": "@tabstack/llamaindex",
+  "version": "0.1.0",
+  "description": "Tabstack tools for LlamaIndex.TS. Schema-enforced web extraction and research, backed by the official Tabstack SDK.",
+  "author": "Tabstack",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mozilla-Ocho/tabstack-integrations-typescript.git",
+    "directory": "packages/llamaindex"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "keywords": ["tabstack", "llamaindex", "tools", "agent", "web-scraping", "extraction"],
+  "dependencies": {
+    "@tabstack/sdk": "^2.6.1"
+  },
+  "peerDependencies": {
+    "llamaindex": "^0.12.0",
+    "zod": "^3.23.8 || ^4.0.0"
+  },
+  "devDependencies": {
+    "@tabstack/integrations-core": "workspace:*",
+    "llamaindex": "^0.12.1",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8",
+    "zod": "^3.23.8"
+  }
+}

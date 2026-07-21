@@ -10,9 +10,14 @@ generate / automate capabilities as native tools for one agent framework.
 
 ```
 packages/
-  core/        @tabstack/integrations-core   private, unpublished. The single source of truth.
-  langchain/   @tabstack/langchain           LangChain.js adapter.
-  vercel-ai/   @tabstack/ai                  Vercel AI SDK adapter.
+  core/          @tabstack/integrations-core   private, unpublished. The single source of truth.
+  langchain/     @tabstack/langchain           LangChain.js adapter.
+  vercel-ai/     @tabstack/ai                  Vercel AI SDK adapter.
+  eve/           @tabstack/eve                 eve (Vercel agent framework) adapter.
+  mastra/        @tabstack/mastra              Mastra adapter.
+  claude-agent/  @tabstack/claude-agent        Claude Agent SDK adapter (in-process MCP server).
+  openai-agents/ @tabstack/openai-agents       OpenAI Agents SDK adapter.
+  llamaindex/    @tabstack/llamaindex          LlamaIndex.TS adapter.
 ```
 
 ## Why it is structured this way
