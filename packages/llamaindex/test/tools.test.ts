@@ -1,4 +1,9 @@
-import { type TabstackClient, toolDescriptions, toolNames } from "@tabstack/integrations-core";
+import {
+  type TabstackClient,
+  TabstackToolError,
+  toolDescriptions,
+  toolNames,
+} from "@tabstack/integrations-core";
 import { describe, expect, it, vi } from "vitest";
 import { createTabstackLlamaindexTools } from "../src/index.js";
 
@@ -60,5 +65,16 @@ describe("@tabstack/llamaindex", () => {
     const result = await spec?.call({ url: "https://example.com" } as never);
     expect(result).toBe("# Hello");
     expect(client.extract.markdown).toHaveBeenCalledWith({ url: "https://example.com" });
+  });
+
+  it("fails fast on invalid input without reaching the SDK client", async () => {
+    // LlamaIndex only warns on a schema-validation failure and still calls
+    // execute with the raw input, so the adapter re-parses and must throw before
+    // the client is touched. Missing required `url`.
+    const client = mockClient();
+    const tools = createTabstackLlamaindexTools({ client });
+    const spec = tools.find((t) => t.metadata.name === toolNames.extractPageContent);
+    await expect(spec?.call({} as never)).rejects.toBeInstanceOf(TabstackToolError);
+    expect(client.extract.markdown).not.toHaveBeenCalled();
   });
 });

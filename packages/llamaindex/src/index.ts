@@ -4,6 +4,7 @@ import {
   type TabstackToolSpec,
   createTabstackClient,
   createTabstackTools,
+  normalizeError,
 } from "@tabstack/integrations-core";
 import { type JSONValue, tool } from "llamaindex";
 
@@ -24,18 +25,30 @@ export type { TabstackClient, TabstackClientConfig } from "@tabstack/integration
  *
  * LlamaIndex's `tool()` (an alias for `FunctionTool.from`) is Zod-native: the
  * core Zod schema is passed straight through as `parameters`, so no JSON-Schema
- * conversion is needed. LlamaIndex derives the advertised JSON Schema internally
- * and validates input against the same Zod schema before invoking `execute`.
+ * conversion is needed, and LlamaIndex derives the advertised JSON Schema itself.
  *
- * `execute` returns the core result, which is JSON-serializable; the cast lines
- * the core `Promise<TOutput>` up with LlamaIndex's `JSONValue` return contract.
+ * On a validation failure, though, LlamaIndex only logs a warning and still calls
+ * `execute` with the raw input, so we re-parse through the core schema here to
+ * guarantee the core body receives validated, typed input. A parse failure is
+ * normalized to `TabstackToolError`, matching the core bodies and the other
+ * adapters. `execute` returns the core result, which is JSON-serializable; the
+ * cast lines the core `Promise<TOutput>` up with LlamaIndex's `JSONValue` return
+ * contract.
  */
 function toLlamaindexTool<TInput, TOutput>(spec: TabstackToolSpec<TInput, TOutput>) {
   return tool({
     name: spec.name,
     description: spec.description,
     parameters: spec.schema,
-    execute: spec.execute as (input: TInput) => Promise<JSONValue>,
+    execute: (async (input: TInput) => {
+      let parsed: TInput;
+      try {
+        parsed = spec.schema.parse(input) as TInput;
+      } catch (err) {
+        throw normalizeError(err);
+      }
+      return spec.execute(parsed);
+    }) as (input: TInput) => Promise<JSONValue>,
   });
 }
 
