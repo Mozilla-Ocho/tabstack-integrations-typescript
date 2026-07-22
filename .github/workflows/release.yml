@@ -1,10 +1,14 @@
 name: Release
 
 # Tag-driven publishing. Create a GitHub Release whose tag names the target:
-#   langchain-vX.Y.Z  -> publish only @tabstack/langchain at X.Y.Z
-#   ai-vX.Y.Z         -> publish only @tabstack/ai at X.Y.Z
-#   eve-vX.Y.Z        -> publish only @tabstack/eve at X.Y.Z
-#   vX.Y.Z            -> publish all at X.Y.Z
+#   langchain-vX.Y.Z      -> publish only @tabstack/langchain at X.Y.Z
+#   ai-vX.Y.Z             -> publish only @tabstack/ai at X.Y.Z
+#   eve-vX.Y.Z            -> publish only @tabstack/eve at X.Y.Z
+#   mastra-vX.Y.Z         -> publish only @tabstack/mastra at X.Y.Z
+#   claude-agent-vX.Y.Z   -> publish only @tabstack/claude-agent at X.Y.Z
+#   openai-agents-vX.Y.Z  -> publish only @tabstack/openai-agents at X.Y.Z
+#   llamaindex-vX.Y.Z     -> publish only @tabstack/llamaindex at X.Y.Z
+#   vX.Y.Z                -> publish all at X.Y.Z
 #
 # The tag's version is written into the target package.json(s) at build time
 # (not committed back); the GitHub Release is the source of truth. Publishing
@@ -43,7 +47,7 @@ jobs:
             NAME=""
             VERSION="${BASH_REMATCH[1]}"
           else
-            echo "::error::Tag '$TAG' must look like vX.Y.Z, langchain-vX.Y.Z, ai-vX.Y.Z, or eve-vX.Y.Z"
+            echo "::error::Tag '$TAG' must look like vX.Y.Z, langchain-vX.Y.Z, ai-vX.Y.Z, eve-vX.Y.Z, mastra-vX.Y.Z, claude-agent-vX.Y.Z, openai-agents-vX.Y.Z, or llamaindex-vX.Y.Z"
             exit 1
           fi
 
@@ -54,11 +58,15 @@ jobs:
 
           # Map the tag prefix to the pnpm package(s) to publish.
           case "$NAME" in
-            "")        PKGS="@tabstack/langchain @tabstack/ai @tabstack/eve" ;;
-            langchain) PKGS="@tabstack/langchain" ;;
-            ai)        PKGS="@tabstack/ai" ;;
-            eve)       PKGS="@tabstack/eve" ;;
-            *)         echo "::error::Unknown package '$NAME' in tag '$TAG' (expected 'langchain', 'ai', or 'eve')"; exit 1 ;;
+            "")             PKGS="@tabstack/langchain @tabstack/ai @tabstack/eve @tabstack/mastra @tabstack/claude-agent @tabstack/openai-agents @tabstack/llamaindex" ;;
+            langchain)      PKGS="@tabstack/langchain" ;;
+            ai)             PKGS="@tabstack/ai" ;;
+            eve)            PKGS="@tabstack/eve" ;;
+            mastra)         PKGS="@tabstack/mastra" ;;
+            claude-agent)   PKGS="@tabstack/claude-agent" ;;
+            openai-agents)  PKGS="@tabstack/openai-agents" ;;
+            llamaindex)     PKGS="@tabstack/llamaindex" ;;
+            *)              echo "::error::Unknown package '$NAME' in tag '$TAG' (expected 'langchain', 'ai', 'eve', 'mastra', 'claude-agent', 'openai-agents', or 'llamaindex')"; exit 1 ;;
           esac
 
           # Prerelease versions must not claim the default `latest` dist-tag.
