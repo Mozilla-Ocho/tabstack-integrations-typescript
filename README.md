@@ -12,6 +12,10 @@ extract and research capabilities as native tools for a given agent framework.
 | `@tabstack/langchain` | Yes | LangChain.js adapter. Wraps core schemas and bodies in `tool()` from `@langchain/core`. |
 | `@tabstack/ai` | Yes | Vercel AI SDK adapter. Wraps core schemas and bodies in `tool()` from `ai`. |
 | `@tabstack/eve` | Yes | [eve](https://vercel.com/eve) adapter. Wraps core schemas and bodies in `defineTool()` from `eve/tools`. |
+| `@tabstack/mastra` | Yes | [Mastra](https://mastra.ai) adapter. Wraps core schemas and bodies in `createTool()` from `@mastra/core/tools`. |
+| `@tabstack/claude-agent` | Yes | [Claude Agent SDK](https://github.com/anthropics/claude-agent-sdk-typescript) adapter. Wraps core schemas and bodies in `tool()` + `createSdkMcpServer()` from `@anthropic-ai/claude-agent-sdk`. |
+| `@tabstack/openai-agents` | Yes | [OpenAI Agents SDK](https://openai.github.io/openai-agents-js/) adapter. Wraps core schemas and bodies in `tool()` from `@openai/agents`. |
+| `@tabstack/llamaindex` | Yes | [LlamaIndex.TS](https://ts.llamaindex.ai) adapter. Wraps core schemas and bodies in `tool()` from `llamaindex`. |
 
 ## Design
 
@@ -40,8 +44,9 @@ pnpm test       # vitest per package
 pnpm lint       # biome
 ```
 
-Releases are driven by GitHub Release tags (`langchain-vX.Y.Z`, `ai-vX.Y.Z`, or `vX.Y.Z` for both).
-`core` is private and excluded from release. See [PUBLISHING.md](./PUBLISHING.md).
+Releases are driven by GitHub Release tags (`langchain-vX.Y.Z`, `ai-vX.Y.Z`, `eve-vX.Y.Z`, `mastra-vX.Y.Z`,
+`claude-agent-vX.Y.Z`, `openai-agents-vX.Y.Z`, `llamaindex-vX.Y.Z`, or `vX.Y.Z` for all). `core` is private
+and excluded from release. See [PUBLISHING.md](./PUBLISHING.md).
 
 ## Tooling choices
 

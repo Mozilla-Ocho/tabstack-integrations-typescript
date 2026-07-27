@@ -1,0 +1,22 @@
+{
+  "name": "@tabstack/openai-agents-demo",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Runnable OpenAI Agents SDK demo wiring in Tabstack tools via @tabstack/openai-agents. Not published.",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@openai/agents": "^0.13.5",
+    "@tabstack/openai-agents": "workspace:*",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "name": "@tabstack/claude-agent",
+  "version": "0.1.0",
+  "description": "Tabstack tools for the Claude Agent SDK. Schema-enforced web extraction, research, generation, and browser automation exposed as an in-process MCP server, backed by the official Tabstack SDK.",
+  "author": "Tabstack",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mozilla-Ocho/tabstack-integrations-typescript.git",
+    "directory": "packages/claude-agent"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "tabstack",
+    "claude",
+    "claude-agent-sdk",
+    "anthropic",
+    "mcp",
+    "tools",
+    "agent",
+    "web-scraping",
+    "extraction"
+  ],
+  "dependencies": {
+    "@tabstack/sdk": "^2.6.1"
+  },
+  "peerDependencies": {
+    "@anthropic-ai/claude-agent-sdk": ">=0.3.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.3.216",
+    "@tabstack/integrations-core": "workspace:*",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8",
+    "zod": "^4.0.0"
+  }
+}
