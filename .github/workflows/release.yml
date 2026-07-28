@@ -8,6 +8,7 @@ name: Release
 #   claude-vX.Y.Z     -> publish only @tabstack/claude-agent at X.Y.Z
 #   openai-vX.Y.Z     -> publish only @tabstack/openai-agents at X.Y.Z
 #   llama-vX.Y.Z      -> publish only @tabstack/llamaindex at X.Y.Z
+#   pi-vX.Y.Z         -> publish only @tabstack/pi-agent at X.Y.Z
 #   vX.Y.Z            -> publish all at X.Y.Z
 #
 # The tag's version is written into the target package.json(s) at build time
@@ -39,7 +40,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          PREFIXES="langchain, ai, eve, mastra, claude, openai, llama"
+          PREFIXES="langchain, ai, eve, mastra, claude, openai, llama, pi"
 
           # Split an optional "<package>-" prefix from the "vX.Y.Z" version.
           if [[ "$TAG" =~ ^([a-z0-9-]+)-v(.+)$ ]]; then
@@ -60,7 +61,7 @@ jobs:
 
           # Map the tag prefix to the pnpm package(s) to publish.
           case "$NAME" in
-            "")          PKGS="@tabstack/langchain @tabstack/ai @tabstack/eve @tabstack/mastra @tabstack/claude-agent @tabstack/openai-agents @tabstack/llamaindex" ;;
+            "")          PKGS="@tabstack/langchain @tabstack/ai @tabstack/eve @tabstack/mastra @tabstack/claude-agent @tabstack/openai-agents @tabstack/llamaindex @tabstack/pi-agent" ;;
             langchain)   PKGS="@tabstack/langchain" ;;
             ai)          PKGS="@tabstack/ai" ;;
             eve)         PKGS="@tabstack/eve" ;;
@@ -68,6 +69,7 @@ jobs:
             claude)      PKGS="@tabstack/claude-agent" ;;
             openai)      PKGS="@tabstack/openai-agents" ;;
             llama)       PKGS="@tabstack/llamaindex" ;;
+            pi)          PKGS="@tabstack/pi-agent" ;;
             *)           echo "::error::Unknown package '$NAME' in tag '$TAG' (expected one of: $PREFIXES)"; exit 1 ;;
           esac
 

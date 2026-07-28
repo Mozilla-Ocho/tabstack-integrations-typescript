@@ -1,0 +1,127 @@
+import { type TabstackClient, toolDescriptions, toolNames } from "@tabstack/integrations-core";
+import { describe, expect, it, vi } from "vitest";
+import { createTabstackPiExtension } from "../src/index.js";
+
+/** Minimal mock of the Tabstack SDK client. No live API call is made. */
+function mockClient() {
+  return {
+    extract: {
+      json: vi.fn().mockResolvedValue({ ok: true }),
+      markdown: vi.fn().mockResolvedValue({ content: "# Hello", url: "https://example.com" }),
+    },
+    generate: {
+      json: vi.fn().mockResolvedValue({ ok: true }),
+    },
+    agent: {
+      research: vi.fn(),
+      automate: vi.fn(),
+    },
+  } as unknown as TabstackClient;
+}
+
+/** The shape of a tool captured from `pi.registerTool`, kept loose for the test. */
+interface CapturedTool {
+  name: string;
+  label: string;
+  description: string;
+  parameters: Record<string, unknown>;
+  execute: (
+    toolCallId: string,
+    params: unknown,
+  ) => Promise<{ content: { type: string; text: string }[]; details: unknown }>;
+}
+
+/**
+ * A minimal fake Pi `ExtensionAPI` that captures every `registerTool` call, so we
+ * can drive the extension factory and assert on the tools it registers.
+ */
+function fakePi() {
+  const tools: CapturedTool[] = [];
+  const pi = {
+    registerTool: (tool: CapturedTool) => {
+      tools.push(tool);
+    },
+  };
+  return { pi, tools };
+}
+
+/** Register the extension against a mock client and return the captured tools. */
+function registerTools(client: TabstackClient): CapturedTool[] {
+  const { pi, tools } = fakePi();
+  createTabstackPiExtension({ client })(pi as never);
+  return tools;
+}
+
+/** Look a captured tool up by its core name. */
+function byName(tools: CapturedTool[], name: string): CapturedTool {
+  const found = tools.find((t) => t.name === name);
+  if (!found) throw new Error(`tool ${name} not found`);
+  return found;
+}
+
+describe("@tabstack/pi-agent", () => {
+  it("registers the five tools by their core names, in lockstep", () => {
+    const tools = registerTools(mockClient());
+    expect(tools.map((t) => t.name).sort()).toEqual(
+      [
+        toolNames.extractStructuredData,
+        toolNames.extractPageContent,
+        toolNames.researchQuestion,
+        toolNames.generateStructuredData,
+        toolNames.automateBrowserTask,
+      ].sort(),
+    );
+  });
+
+  it("reuses core descriptions verbatim and gives each tool a human label", () => {
+    const tools = registerTools(mockClient());
+    const extract = byName(tools, toolNames.extractStructuredData);
+    expect(extract.description).toBe(toolDescriptions.extractStructuredData);
+    expect(byName(tools, toolNames.extractPageContent).description).toBe(
+      toolDescriptions.extractPageContent,
+    );
+    expect(extract.label).toBe("Extract Structured Data");
+  });
+
+  it("advertises each core schema as a Typebox-wrapped JSON Schema", () => {
+    const tools = registerTools(mockClient());
+    const params = byName(tools, toolNames.extractPageContent).parameters;
+    // Type.Unsafe tags the raw JSON Schema object with a `~unsafe` marker.
+    expect(params["~unsafe"]).toBeNull();
+    expect(params.type).toBe("object");
+    expect((params.properties as Record<string, unknown>).url).toBeDefined();
+  });
+
+  it("routes execution through the injected client and returns the Pi ToolResult shape", async () => {
+    const client = mockClient();
+    const tools = registerTools(client);
+    const result = await byName(tools, toolNames.extractPageContent).execute("call-1", {
+      url: "https://example.com",
+    });
+    // extract_page_content yields a string; it passes through as text content.
+    expect(result.content).toEqual([{ type: "text", text: "# Hello" }]);
+    expect(result.details).toBe("# Hello");
+    expect(client.extract.markdown).toHaveBeenCalledWith({ url: "https://example.com" });
+  });
+
+  it("serializes object results to JSON text", async () => {
+    const client = mockClient();
+    const tools = registerTools(client);
+    const result = await byName(tools, toolNames.extractStructuredData).execute("call-2", {
+      url: "https://example.com",
+      json_schema_json: JSON.stringify({ type: "object" }),
+    });
+    expect(result.content).toEqual([{ type: "text", text: JSON.stringify({ ok: true }) }]);
+    expect(client.extract.json).toHaveBeenCalledOnce();
+  });
+
+  it("rejects schema-violating input with TabstackToolError before touching the client", async () => {
+    const client = mockClient();
+    const tools = registerTools(client);
+    // Missing required `url`. Pi reports a failed tool via a thrown error.
+    await expect(
+      byName(tools, toolNames.extractPageContent).execute("call-3", {}),
+    ).rejects.toMatchObject({ name: "TabstackToolError" });
+    expect(client.extract.markdown).not.toHaveBeenCalled();
+  });
+});

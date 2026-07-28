@@ -16,6 +16,7 @@ extract and research capabilities as native tools for a given agent framework.
 | `@tabstack/claude-agent` | Yes | [Claude Agent SDK](https://github.com/anthropics/claude-agent-sdk-typescript) adapter. Wraps core schemas and bodies in `tool()` + `createSdkMcpServer()` from `@anthropic-ai/claude-agent-sdk`. |
 | `@tabstack/openai-agents` | Yes | [OpenAI Agents SDK](https://openai.github.io/openai-agents-js/) adapter. Wraps core schemas and bodies in `tool()` from `@openai/agents`. |
 | `@tabstack/llamaindex` | Yes | [LlamaIndex.TS](https://ts.llamaindex.ai) adapter. Wraps core schemas and bodies in `tool()` from `llamaindex`. |
+| `@tabstack/pi-agent` | Yes | [Pi coding agent](https://pi.dev) extension. Registers core schemas and bodies via `pi.registerTool()` from `@earendil-works/pi-coding-agent`. |
 
 ## Design
 
@@ -45,7 +46,7 @@ pnpm lint       # biome
 ```
 
 Releases are driven by GitHub Release tags (`langchain-vX.Y.Z`, `ai-vX.Y.Z`, `eve-vX.Y.Z`, `mastra-vX.Y.Z`,
-`claude-agent-vX.Y.Z`, `openai-agents-vX.Y.Z`, `llamaindex-vX.Y.Z`, or `vX.Y.Z` for all). `core` is private
+`claude-vX.Y.Z`, `openai-vX.Y.Z`, `llama-vX.Y.Z`, `pi-vX.Y.Z`, or `vX.Y.Z` for all). `core` is private
 and excluded from release. See [PUBLISHING.md](./PUBLISHING.md).
 
 ## Tooling choices
