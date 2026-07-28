@@ -73,37 +73,92 @@ function toPiTool<TInput, TOutput>(spec: TabstackToolSpec<TInput, TOutput>): Too
   });
 }
 
-/** Register all five Tabstack tools on a Pi extension API from a set of core specs. */
-function registerAll(pi: ExtensionAPI, specs: TabstackTools): void {
-  pi.registerTool(toPiTool(specs.extractStructuredData));
-  pi.registerTool(toPiTool(specs.extractPageContent));
-  pi.registerTool(toPiTool(specs.researchQuestion));
-  pi.registerTool(toPiTool(specs.generateStructuredData));
-  pi.registerTool(toPiTool(specs.automateBrowserTask));
+/** The core (snake_case) name of every Tabstack tool this adapter exposes to Pi. */
+export type TabstackPiToolName =
+  | "extract_structured_data"
+  | "extract_page_content"
+  | "research_question"
+  | "generate_structured_data"
+  | "automate_browser_task";
+
+/** Build every Tabstack Pi `ToolDefinition` from a set of core specs, keyed by tool name. */
+function buildToolDefs(specs: TabstackTools): Record<TabstackPiToolName, ToolDefinition> {
+  return {
+    extract_structured_data: toPiTool(specs.extractStructuredData),
+    extract_page_content: toPiTool(specs.extractPageContent),
+    research_question: toPiTool(specs.researchQuestion),
+    generate_structured_data: toPiTool(specs.generateStructuredData),
+    automate_browser_task: toPiTool(specs.automateBrowserTask),
+  };
+}
+
+/**
+ * Build the Tabstack Pi `ToolDefinition`s bound to a specific client (or config),
+ * keyed by tool name. Use this when you want full control over which tools to
+ * register, or to register them alongside your own tools in a hand-written
+ * extension.
+ *
+ * @returns a record of `ToolDefinition` keyed by the core tool name.
+ */
+export function createTabstackPiTools(
+  config: TabstackClientConfig & { client?: TabstackClient } = {},
+): Record<TabstackPiToolName, ToolDefinition> {
+  const { client, ...clientConfig } = config;
+  return buildToolDefs(createTabstackTools(client ?? createTabstackClient(clientConfig)));
 }
 
 /**
  * Build a Pi extension bound to a specific client (or config). Use this when you
- * need a non-default API key or base URL. The returned factory registers all five
- * Tabstack tools when Pi loads the extension.
+ * need a non-default API key or base URL, or when you want only a subset of the
+ * tools available to the agent.
+ *
+ * By default all five tools are registered. Pass `tools` to register only some,
+ * for example `{ tools: ["extract_page_content", "research_question"] }` for a
+ * read-and-research agent with no browser automation. The tools are registered in
+ * the order given.
  *
  * @returns a Pi extension factory `(pi) => void`.
  */
 export function createTabstackPiExtension(
-  config: TabstackClientConfig & { client?: TabstackClient } = {},
+  config: TabstackClientConfig & { client?: TabstackClient; tools?: TabstackPiToolName[] } = {},
 ): (pi: ExtensionAPI) => void {
-  const { client, ...clientConfig } = config;
-  const specs = createTabstackTools(client ?? createTabstackClient(clientConfig));
-  return (pi) => registerAll(pi, specs);
+  const { client, tools, ...clientConfig } = config;
+  const defs = buildToolDefs(createTabstackTools(client ?? createTabstackClient(clientConfig)));
+  const names = tools ?? (Object.keys(defs) as TabstackPiToolName[]);
+  return (pi) => {
+    for (const name of names) {
+      const def = defs[name];
+      if (!def) throw new Error(`Unknown Tabstack Pi tool: ${name}`);
+      pi.registerTool(def);
+    }
+  };
 }
+
+// Default-client tool definitions. Built at import, but the client is resolved
+// lazily on first tool call, so importing this module never requires the key.
+const defaultDefs = buildToolDefs(createTabstackTools());
+
+// Explicit `ToolDefinition` annotations: the inferred type otherwise references
+// typebox internals and is not portable in the emitted declarations (TS2742).
+/** Extract structured JSON data from a URL. Pi `ToolDefinition`, default client. */
+export const extractStructuredDataTool: ToolDefinition = defaultDefs.extract_structured_data;
+/** Fetch a URL and return clean markdown. Pi `ToolDefinition`, default client. */
+export const extractPageContentTool: ToolDefinition = defaultDefs.extract_page_content;
+/** Research a question across multiple web sources. Pi `ToolDefinition`, default client. */
+export const researchQuestionTool: ToolDefinition = defaultDefs.research_question;
+/** Fetch a URL and transform its content with AI into JSON. Pi `ToolDefinition`, default client. */
+export const generateStructuredDataTool: ToolDefinition = defaultDefs.generate_structured_data;
+/** Run a natural-language browser automation task. Pi `ToolDefinition`, default client. */
+export const automateBrowserTaskTool: ToolDefinition = defaultDefs.automate_browser_task;
 
 /**
  * Default Pi extension. Registers all five Tabstack tools using the default
  * client, which resolves `TABSTACK_API_KEY` lazily on first tool call, so loading
- * the extension never requires the key to be set.
+ * the extension never requires the key to be set. For a subset, use
+ * `createTabstackPiExtension({ tools: [...] })`.
  */
 const tabstackExtension = (pi: ExtensionAPI): void => {
-  registerAll(pi, createTabstackTools());
+  for (const def of Object.values(defaultDefs)) pi.registerTool(def);
 };
 
 export default tabstackExtension;

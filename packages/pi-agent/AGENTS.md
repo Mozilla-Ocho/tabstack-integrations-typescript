@@ -48,8 +48,14 @@ Load it with `pi -e ./tabstack.ts`, or drop the file into `~/.pi/agent/extension
     never carries an error flag from us), so `execute` throws on failure.
   - `execute` returns Pi's `AgentToolResult`: `{ content: [{ type: "text", text }], details }`. String
     results (`extract_page_content`) pass through; object results are `JSON.stringify`ed.
-- The **default export** is a Pi extension factory `(pi) => void` that registers all five tools using
-  the default (lazy) client. `createTabstackPiExtension(config)` returns the same, bound to a client.
+- Exports, from one `buildToolDefs(specs)` builder so every path shares the same wrapping:
+  - **default export**: a Pi extension factory `(pi) => void` registering all five tools (default lazy client).
+  - `createTabstackPiExtension(config)`: same, bound to a client, and accepts `tools?: TabstackPiToolName[]`
+    to register a subset (in the given order) so a consumer can, for example, expose read + research
+    without browser automation.
+  - `createTabstackPiTools(config)`: the five `ToolDefinition`s keyed by core name, for hand-written extensions.
+  - individual `*Tool` consts (default client), annotated `: ToolDefinition` (the inferred typebox type is
+    not portable in the emitted `.d.ts`, TS2742), plus the `TabstackPiToolName` union.
 
 ## Rules specific to this package
 
@@ -67,8 +73,8 @@ Load it with `pi -e ./tabstack.ts`, or drop the file into `~/.pi/agent/extension
   already resolves Zod 4 and the alias is a no-op.
 - Names/descriptions/schemas come from core. Do not redefine them here (labels are the one bit of
   UI-only text that lives here, in the `LABELS` map).
-- When core adds a tool, add a `LABELS` entry and a `pi.registerTool(toPiTool(specs.newTool))` line in
-  `registerAll`, and add a test.
+- When core adds a tool, add a `LABELS` entry, an entry in `buildToolDefs`, the tool name to the
+  `TabstackPiToolName` union, a matching individual `*Tool` export, and a test.
 
 ## Build / test
 

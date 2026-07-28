@@ -65,6 +65,36 @@ key to be set.
 The tool names stay in lockstep with the `@tabstack/langchain`, `@tabstack/openai-agents`,
 `@tabstack/eve`, and Python `langchain-tabstack` packages.
 
+## Registering a subset
+
+You often do not want every tool. A coding agent that should read and research but never drive a
+browser can register just those two. Pass `tools` to pick the subset (registered in the order given):
+
+```ts
+// tabstack.ts
+import { createTabstackPiExtension } from "@tabstack/pi-agent";
+
+// Read-and-research only, no browser automation.
+export default createTabstackPiExtension({
+  tools: ["extract_page_content", "research_question"],
+});
+```
+
+For full control, register individual tools yourself in a hand-written extension. Every tool is
+exported as a Pi `ToolDefinition` (default client), and `createTabstackPiTools(config)` returns them
+keyed by name for a custom client:
+
+```ts
+import { extractPageContentTool, researchQuestionTool } from "@tabstack/pi-agent";
+// or, custom client: import { createTabstackPiTools } from "@tabstack/pi-agent";
+
+export default function (pi) {
+  pi.registerTool(extractPageContentTool);
+  pi.registerTool(researchQuestionTool);
+  // ...and your own tools alongside them.
+}
+```
+
 ## Configuration
 
 For a custom API key or base URL, or to reuse one client, build the extension explicitly:
@@ -75,6 +105,7 @@ import { createTabstackPiExtension } from "@tabstack/pi-agent";
 
 export default createTabstackPiExtension({ apiKey: process.env.MY_KEY });
 // or pass an SDK client you already have: createTabstackPiExtension({ client })
+// combine with a subset: createTabstackPiExtension({ apiKey, tools: ["research_question"] })
 ```
 
 ## How the schemas work

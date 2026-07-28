@@ -1,6 +1,11 @@
 import { type TabstackClient, toolDescriptions, toolNames } from "@tabstack/integrations-core";
 import { describe, expect, it, vi } from "vitest";
-import { createTabstackPiExtension } from "../src/index.js";
+import piExtension, {
+  createTabstackPiExtension,
+  createTabstackPiTools,
+  extractPageContentTool,
+  researchQuestionTool,
+} from "../src/index.js";
 
 /** Minimal mock of the Tabstack SDK client. No live API call is made. */
 function mockClient() {
@@ -123,5 +128,41 @@ describe("@tabstack/pi-agent", () => {
       byName(tools, toolNames.extractPageContent).execute("call-3", {}),
     ).rejects.toMatchObject({ name: "TabstackToolError" });
     expect(client.extract.markdown).not.toHaveBeenCalled();
+  });
+
+  it("registers only the requested subset, in order, when `tools` is given", () => {
+    const { pi, tools } = fakePi();
+    createTabstackPiExtension({
+      client: mockClient(),
+      tools: ["research_question", "extract_page_content"],
+    })(pi as never);
+    expect(tools.map((t) => t.name)).toEqual([
+      toolNames.researchQuestion,
+      toolNames.extractPageContent,
+    ]);
+  });
+
+  it("default export registers all five tools", () => {
+    const { pi, tools } = fakePi();
+    piExtension(pi as never);
+    expect(tools).toHaveLength(5);
+  });
+
+  it("createTabstackPiTools returns every tool keyed by core name", () => {
+    const defs = createTabstackPiTools({ client: mockClient() });
+    expect(Object.keys(defs).sort()).toEqual(
+      [
+        toolNames.extractStructuredData,
+        toolNames.extractPageContent,
+        toolNames.researchQuestion,
+        toolNames.generateStructuredData,
+        toolNames.automateBrowserTask,
+      ].sort(),
+    );
+  });
+
+  it("exports individual default-client tool definitions", () => {
+    expect(extractPageContentTool.name).toBe(toolNames.extractPageContent);
+    expect(researchQuestionTool.name).toBe(toolNames.researchQuestion);
   });
 });
