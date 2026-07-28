@@ -1,5 +1,5 @@
 import { type TabstackClient, getDefaultClient } from "./client.js";
-import { normalizeError } from "./errors.js";
+import { TabstackToolError, normalizeError } from "./errors.js";
 import {
   automateBrowserTaskSchema,
   extractPageContentSchema,
@@ -161,6 +161,11 @@ export async function researchQuestion(
         };
       }
     }
+    // The SDK swallows an aborted stream and returns silently, so the loop ends
+    // normally on cancel. Surface it as a failure rather than the fallback below.
+    if (options?.signal?.aborted) {
+      throw new TabstackToolError("Tabstack tool call was aborted");
+    }
     return { answer: "Research did not complete", sources: [] };
   } catch (err) {
     throw normalizeError(err);
@@ -251,6 +256,11 @@ export async function automateBrowserTask(
         default:
           break;
       }
+    }
+    // The SDK swallows an aborted stream and returns silently, so the loop ends
+    // normally on cancel. Surface it as a failure rather than the fallback below.
+    if (options?.signal?.aborted) {
+      throw new TabstackToolError("Tabstack tool call was aborted");
     }
     return {
       answer: null,
