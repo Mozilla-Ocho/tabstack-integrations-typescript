@@ -33,6 +33,7 @@ interface CapturedTool {
   execute: (
     toolCallId: string,
     params: unknown,
+    signal?: AbortSignal,
   ) => Promise<{ content: { type: string; text: string }[]; details: unknown }>;
 }
 
@@ -121,13 +122,44 @@ describe("@tabstack/pi-agent", () => {
   });
 
   it("rejects schema-violating input with TabstackToolError before touching the client", async () => {
+    // Note: Pi validates params (TypeBox) and throws before execute in normal use,
+    // so this drives execute directly to cover the wrapper's own re-parse guard,
+    // not the error path a model hits. Missing required `url`.
     const client = mockClient();
     const tools = registerTools(client);
-    // Missing required `url`. Pi reports a failed tool via a thrown error.
     await expect(
       byName(tools, toolNames.extractPageContent).execute("call-3", {}),
     ).rejects.toMatchObject({ name: "TabstackToolError" });
     expect(client.extract.markdown).not.toHaveBeenCalled();
+  });
+
+  it("rejects immediately when the abort signal is already aborted", async () => {
+    const tools = registerTools(mockClient());
+    await expect(
+      byName(tools, toolNames.extractPageContent).execute(
+        "call-4",
+        { url: "https://example.com" },
+        AbortSignal.abort(),
+      ),
+    ).rejects.toMatchObject({ name: "TabstackToolError" });
+  });
+
+  it("rejects when the signal aborts mid-call, unblocking the session", async () => {
+    // A client whose call never settles, so only the abort can resolve the race.
+    const client = {
+      extract: { json: vi.fn(), markdown: vi.fn().mockReturnValue(new Promise(() => {})) },
+      generate: { json: vi.fn() },
+      agent: { research: vi.fn(), automate: vi.fn() },
+    } as unknown as TabstackClient;
+    const tools = registerTools(client);
+    const controller = new AbortController();
+    const pending = byName(tools, toolNames.extractPageContent).execute(
+      "call-5",
+      { url: "https://example.com" },
+      controller.signal,
+    );
+    controller.abort();
+    await expect(pending).rejects.toMatchObject({ name: "TabstackToolError" });
   });
 
   it("registers only the requested subset, in order, when `tools` is given", () => {

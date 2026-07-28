@@ -41,11 +41,24 @@ Load it with `pi -e ./tabstack.ts`, or drop the file into `~/.pi/agent/extension
     wrapped with `Type.Unsafe`, which tags a raw JSON Schema object as a Typebox schema (Typebox
     schemas are themselves JSON Schema, so Pi sends it straight to the provider). **Do not**
     hand-author Typebox schemas that duplicate core's.
-  - Because the advertised schema is `Type.Unsafe<unknown>`, Pi hands `execute` the raw params. The
-    wrapper re-parses through the core Zod schema (`spec.schema.parse`) to recover typed input before
-    delegating, and normalizes a parse failure to `TabstackToolError` (via core's `normalizeError`).
+  - Pi **does** validate params before `execute`: `prepareToolCall` runs `validateToolArguments`
+    (TypeBox `Value.Convert` + `Compile(...).Check`) and throws a formatted error first, so the handler
+    only sees well-formed input. The wrapper still re-parses through the core Zod schema, because the
+    advertised schema is `Type.Unsafe<unknown>` (static type `unknown`) so the re-parse is what recovers
+    the typed `TInput`, and as defense in depth. A parse failure is normalized to `TabstackToolError`.
+    Do **not** remove the re-parse believing it is the only validation: it is not, and its error is not
+    the one a model normally hits (Pi rejects malformed input before `execute`). The
+    `rejects schema-violating input ...` test drives `execute` directly, so it exercises that
+    short-circuited path, not the model-facing one.
   - **Errors are thrown, not encoded.** Pi reports a failed tool by a thrown error (`AgentToolResult`
     never carries an error flag from us), so `execute` throws on failure.
+  - **Cancellation.** Pi passes an `AbortSignal` as the third `execute` arg and blocks its agent loop on
+    the tool promise, so `execute` races the core call against the signal (`raceAbort`) to unblock the
+    session on cancel. Limitation: core's `execute` does not yet accept a signal, so the underlying SDK
+    request keeps running (and billing) until it completes; `research_question` and
+    `automate_browser_task` are long-running SSE streams where this is most visible. Truly aborting the
+    request needs core to thread the signal into the tool bodies (`client.*` calls accept
+    `RequestOptions.signal`); that is a core change, tracked separately.
   - `execute` returns Pi's `AgentToolResult`: `{ content: [{ type: "text", text }], details }`. String
     results (`extract_page_content`) pass through; object results are `JSON.stringify`ed.
 - Exports, from one `buildToolDefs(specs)` builder so every path shares the same wrapping:

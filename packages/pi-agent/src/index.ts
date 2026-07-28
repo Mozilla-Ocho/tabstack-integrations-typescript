@@ -6,6 +6,7 @@ import {
 import {
   type TabstackClient,
   type TabstackClientConfig,
+  TabstackToolError,
   type TabstackToolSpec,
   type TabstackTools,
   createTabstackClient,
@@ -14,6 +15,41 @@ import {
 } from "@tabstack/integrations-core";
 import { type TSchema, Type } from "typebox";
 import { schemaToJsonSchema } from "./schema.js";
+
+/**
+ * Reject as soon as `signal` aborts, otherwise settle with `promise`.
+ *
+ * Pi passes an `AbortSignal` to `execute` and blocks the agent loop on the tool
+ * promise, so without this a cancelled `research_question` or
+ * `automate_browser_task` (both long-running SSE streams) would leave the session
+ * wedged until the call finished. Racing the signal lets a cancel unblock the
+ * session immediately.
+ *
+ * Caveat: core's `execute` does not yet accept a signal, so the underlying SDK
+ * request is not itself cancelled and keeps running (and billing) until it
+ * completes. Truly aborting the request needs core to thread the signal into the
+ * tool bodies; see the package AGENTS.md.
+ */
+function raceAbort<T>(promise: Promise<T>, signal: AbortSignal | undefined): Promise<T> {
+  if (!signal) return promise;
+  if (signal.aborted) {
+    return Promise.reject(new TabstackToolError("Tabstack tool call was aborted"));
+  }
+  return new Promise<T>((resolve, reject) => {
+    const onAbort = () => reject(new TabstackToolError("Tabstack tool call was aborted"));
+    signal.addEventListener("abort", onAbort, { once: true });
+    promise.then(
+      (value) => {
+        signal.removeEventListener("abort", onAbort);
+        resolve(value);
+      },
+      (err) => {
+        signal.removeEventListener("abort", onAbort);
+        reject(err);
+      },
+    );
+  });
+}
 
 export {
   TabstackToolError,
@@ -46,12 +82,18 @@ const LABELS: Record<string, string> = {
  * `Type.Unsafe`, which tags a raw JSON Schema object as a Typebox schema (Typebox
  * schemas are themselves JSON Schema, so Pi sends it straight to the provider).
  *
- * Because the advertised schema is `Type.Unsafe<unknown>`, Pi hands `execute` the
- * raw params, so we re-parse through the core Zod schema to recover typed input,
- * normalizing a parse failure to `TabstackToolError`. Pi reports a failed tool by
- * a thrown error (it never encodes an error into the result content), so throwing
- * is the right contract. String results (`extract_page_content`) pass through;
- * object results are serialized to JSON text for the model.
+ * Pi validates params against the advertised schema (via TypeBox) and throws
+ * before `execute` runs, so the handler only sees well-formed input. But because
+ * the schema is `Type.Unsafe<unknown>`, its static type is `unknown`, so we
+ * re-parse through the core Zod schema to recover the typed `TInput` (and as
+ * defense in depth). A parse failure is normalized to `TabstackToolError`. Pi
+ * reports a failed tool by a thrown error (it never encodes an error into the
+ * result content), so throwing is the right contract. String results
+ * (`extract_page_content`) pass through; object results are serialized to JSON
+ * text for the model.
+ *
+ * Pi's `AbortSignal` is raced against the core call so a cancel unblocks the
+ * session (see `raceAbort` for the billing caveat).
  */
 function toPiTool<TInput, TOutput>(spec: TabstackToolSpec<TInput, TOutput>): ToolDefinition {
   return defineTool({
@@ -59,14 +101,14 @@ function toPiTool<TInput, TOutput>(spec: TabstackToolSpec<TInput, TOutput>): Too
     label: LABELS[spec.name] ?? spec.name,
     description: spec.description,
     parameters: Type.Unsafe(schemaToJsonSchema(spec.schema) as unknown as TSchema),
-    async execute(_toolCallId, params) {
+    async execute(_toolCallId, params, signal) {
       let parsed: TInput;
       try {
         parsed = spec.schema.parse(params) as TInput;
       } catch (err) {
         throw normalizeError(err);
       }
-      const result = await spec.execute(parsed);
+      const result = await raceAbort(spec.execute(parsed), signal);
       const text = typeof result === "string" ? result : JSON.stringify(result);
       return { content: [{ type: "text" as const, text }], details: result };
     },
