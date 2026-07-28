@@ -26,7 +26,7 @@ export type { TabstackClient, TabstackClientConfig } from "@tabstack/integration
  *
  * eve advertises a JSON Schema (or a Standard-JSON-Schema value) to the model,
  * not a raw Zod schema, so the core Zod schema is converted with
- * `schemaToJsonSchema` (Zod 3 and Zod 4 both supported). eve then hands
+ * `schemaToJsonSchema` (Zod 4's native `z.toJSONSchema`). eve then hands
  * `execute` the unvalidated input, so we re-parse through the core Zod schema to
  * recover the typed input before delegating to the core body. A parse failure is
  * normalized to `TabstackToolError`, matching the error contract of the core

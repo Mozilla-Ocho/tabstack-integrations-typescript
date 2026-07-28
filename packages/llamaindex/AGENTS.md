@@ -34,9 +34,8 @@ For a custom client, build them explicitly with `createTabstackLlamaindexTools({
 - Each is wrapped with `tool({ name, description, parameters, execute })` (an alias for
   `FunctionTool.from`):
   - LlamaIndex's `tool()` is **Zod-native**: the core Zod schema is passed straight through as
-    `parameters`. No JSON-Schema conversion is needed (this is why there is no `src/schema.ts` and no
-    `zod-to-json-schema` dependency, unlike `@tabstack/eve`). LlamaIndex derives the advertised JSON
-    Schema itself and stores it on `tool.metadata.parameters`.
+    `parameters`. No JSON-Schema conversion is needed, so there is no `src/schema.ts`. LlamaIndex
+    derives the advertised JSON Schema itself and stores it on `tool.metadata.parameters`.
   - LlamaIndex validates input against that same Zod schema before invoking `execute` (via its
     internal `safeParseSchema` on `tool.call`), so the core body receives typed input.
   - `execute` returns the core result, which is JSON-serializable. The wrapper casts the core

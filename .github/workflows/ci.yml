@@ -31,6 +31,12 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      # The demo apps consume the adapters through their built dist, so this is
+      # the only check that exercises the published type surface (and catches a
+      # peer range, such as zod, drifting between packages/ and apps/).
+      - name: Typecheck demos
+        run: pnpm demos:typecheck
+
       - name: Lint
         run: pnpm lint
 

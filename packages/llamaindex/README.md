@@ -89,8 +89,8 @@ API errors). LlamaIndex surfaces this in the tool result.
 - The client is created lazily, so importing the package never requires an API key to be set.
 - Inputs are validated against the core Zod schema (LlamaIndex passes the schema straight through as
   the tool's `parameters`), so malformed model output is caught before the SDK call.
-- **Zod 3 and Zod 4 both work.** LlamaIndex's `tool()` is Zod-native and accepts either; your app's
-  own Zod version is used (it's a peer dependency).
+- **Requires Zod 4.** LlamaIndex's `tool()` is Zod-native and takes the core schema directly; your
+  app's own Zod 4 instance is used (it's a peer dependency).
 
 ## Links
 

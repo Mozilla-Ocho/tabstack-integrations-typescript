@@ -33,12 +33,9 @@ export { researchQuestionTool as default } from "@tabstack/eve";
   - `defineTool` **brands** its result; eve rejects raw object literals, so tools must go through it.
   - eve's `inputSchema` takes a Standard-JSON-Schema value or a raw JSON Schema object, **not** a Zod
     schema. The core Zod schema is converted by `schemaToJsonSchema` (in `src/schema.ts`, an internal
-    module deliberately **not** re-exported from `src/index.ts`), which spans Zod 3 and Zod 4: Zod 4's
-    native `z.toJSONSchema` when present, else the `zod-to-json-schema` package. Do **not** call
-    `zod-to-json-schema` directly: it silently emits an empty schema (no properties) for Zod 4 inputs.
-    The native fn is injectable into `schemaToJsonSchema` so both branches are tested (the repo
-    dev-installs Zod 3 as `zod` and Zod 4 as the `zod4` alias); tests import it from `src/schema.ts`,
-    not the package entry.
+    module deliberately **not** re-exported from `src/index.ts`) using Zod 4's native `z.toJSONSchema`.
+    The repo is Zod 4 only, so there is no version detection and no `zod-to-json-schema` fallback; tests
+    import `schemaToJsonSchema` from `src/schema.ts`, not the package entry.
   - Because eve advertises JSON Schema (not Zod), it hands `execute` unvalidated input. The wrapper
     re-parses through the core Zod schema (`spec.schema.parse`) to recover typed input before
     delegating, and normalizes a parse failure to `TabstackToolError` (via core's `normalizeError`)
@@ -48,8 +45,7 @@ export { researchQuestionTool as default } from "@tabstack/eve";
 
 ## Rules specific to this package
 
-- `eve` (>=0.24.0) and `zod` are **peer dependencies** (+ dev dependencies). Never direct.
-- `zod-to-json-schema` is a direct dependency (Zod 3 conversion fallback).
+- `eve` (>=0.24.0) and `zod` (^4.0.0) are **peer dependencies** (+ dev dependencies). Never direct.
 - `@tabstack/integrations-core` is a dev dependency, bundled via tsup `noExternal`.
 - Names/descriptions/schemas come from core. Do not redefine them here.
 - When core adds a tool, add an entry in `buildTools`, a matching `*Tool` const export, and a test.
