@@ -29,8 +29,11 @@ const { text } = await generateText({ model, tools: tabstackTools, prompt });
 ## How it works internally
 
 - `createTabstackTools()` from core gives `{ name, description, schema, execute }` specs.
-- Each is wrapped with `tool({ description, inputSchema: spec.schema, execute: spec.execute })`. The
-  AI SDK v5+ API uses `inputSchema` (renamed from `parameters`); types are inferred from the schema.
+- Each is wrapped with `tool({ description, inputSchema: spec.schema, execute })`, where `execute`
+  destructures the AI SDK's `abortSignal` and forwards it to the core body as
+  `spec.execute(input, { signal: abortSignal })`, so a cancelled generation aborts the underlying
+  Tabstack request. The AI SDK v5+ API uses `inputSchema` (renamed from `parameters`); types are
+  inferred from the schema.
 - Tools are built inline per spec (not via a generic helper): the AI SDK's conditional `tool()`
   typing rejects a generic passthrough, so concrete specs are needed for inference. Keep it inline.
 - `outputSchema` is intentionally omitted; add it only where a return shape is stable and worth

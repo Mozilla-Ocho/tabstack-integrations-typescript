@@ -6,6 +6,7 @@ import {
 import {
   type TabstackClient,
   type TabstackClientConfig,
+  TabstackToolError,
   type TabstackToolSpec,
   type TabstackTools,
   createTabstackClient,
@@ -14,6 +15,39 @@ import {
 } from "@tabstack/integrations-core";
 import { type TSchema, Type } from "typebox";
 import { schemaToJsonSchema } from "./schema.js";
+
+/**
+ * Reject as soon as `signal` aborts, otherwise settle with `promise`.
+ *
+ * The signal is also threaded into the core call so the underlying request is
+ * cancelled (see `toPiTool`), but that is not enough on its own to unblock Pi
+ * promptly: the SDK only observes the signal at the `fetch` boundary, so an abort
+ * raised during a retry backoff (its `sleep` is not signal-aware) is not seen
+ * until the sleep elapses, which can be many seconds on a `429 Retry-After`. Pi
+ * blocks its agent loop on the tool promise, so racing the signal here bounds the
+ * cancel latency: forwarding `{ signal }` stops the billing, racing unblocks the
+ * session immediately.
+ */
+function raceAbort<T>(promise: Promise<T>, signal: AbortSignal | undefined): Promise<T> {
+  if (!signal) return promise;
+  if (signal.aborted) {
+    return Promise.reject(new TabstackToolError("Tabstack tool call was aborted"));
+  }
+  return new Promise<T>((resolve, reject) => {
+    const onAbort = () => reject(new TabstackToolError("Tabstack tool call was aborted"));
+    signal.addEventListener("abort", onAbort, { once: true });
+    promise.then(
+      (value) => {
+        signal.removeEventListener("abort", onAbort);
+        resolve(value);
+      },
+      (err) => {
+        signal.removeEventListener("abort", onAbort);
+        reject(err);
+      },
+    );
+  });
+}
 
 export {
   TabstackToolError,
@@ -56,9 +90,10 @@ const LABELS: Record<string, string> = {
  * (`extract_page_content`) pass through; object results are serialized to JSON
  * text for the model.
  *
- * Pi's `AbortSignal` is threaded into the core call, so cancelling a tool aborts
- * the underlying Tabstack request (and stops billing), not just the agent loop.
- * This matters for `research_question` and `automate_browser_task`, which are
+ * Pi's `AbortSignal` is both threaded into the core call (so cancelling aborts the
+ * underlying Tabstack request and stops billing) and raced against the result (so
+ * the Pi session unblocks immediately even if the SDK is mid-retry-backoff). This
+ * matters most for `research_question` and `automate_browser_task`, the
  * long-running SSE streams.
  */
 function toPiTool<TInput, TOutput>(spec: TabstackToolSpec<TInput, TOutput>): ToolDefinition {
@@ -74,7 +109,7 @@ function toPiTool<TInput, TOutput>(spec: TabstackToolSpec<TInput, TOutput>): Too
       } catch (err) {
         throw normalizeError(err);
       }
-      const result = await spec.execute(parsed, { signal });
+      const result = await raceAbort(spec.execute(parsed, { signal }), signal);
       const text = typeof result === "string" ? result : JSON.stringify(result);
       return { content: [{ type: "text" as const, text }], details: result };
     },

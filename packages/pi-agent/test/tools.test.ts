@@ -210,6 +210,26 @@ describe("@tabstack/pi-agent", () => {
     await expect(pending).rejects.toMatchObject({ name: "TabstackToolError" });
   });
 
+  it("rejects promptly on abort even while the request is still pending", async () => {
+    // Simulates the SDK stuck in a retry backoff (its sleep is not signal-aware):
+    // the client promise never settles, so only the raced signal can unblock the
+    // Pi session. Forwarding the signal alone would leave it wedged here.
+    const client = {
+      extract: { json: vi.fn(), markdown: vi.fn().mockReturnValue(new Promise(() => {})) },
+      generate: { json: vi.fn() },
+      agent: { research: vi.fn(), automate: vi.fn() },
+    } as unknown as TabstackClient;
+    const tools = registerTools(client);
+    const controller = new AbortController();
+    const pending = byName(tools, toolNames.extractPageContent).execute(
+      "call-7",
+      { url: "https://example.com" },
+      controller.signal,
+    );
+    controller.abort();
+    await expect(pending).rejects.toMatchObject({ name: "TabstackToolError" });
+  });
+
   it("registers only the requested subset, in order, when `tools` is given", () => {
     const { pi, tools } = fakePi();
     createTabstackPiExtension({
