@@ -53,12 +53,10 @@ Load it with `pi -e ./tabstack.ts`, or drop the file into `~/.pi/agent/extension
   - **Errors are thrown, not encoded.** Pi reports a failed tool by a thrown error (`AgentToolResult`
     never carries an error flag from us), so `execute` throws on failure.
   - **Cancellation.** Pi passes an `AbortSignal` as the third `execute` arg and blocks its agent loop on
-    the tool promise, so `execute` races the core call against the signal (`raceAbort`) to unblock the
-    session on cancel. Limitation: core's `execute` does not yet accept a signal, so the underlying SDK
-    request keeps running (and billing) until it completes; `research_question` and
-    `automate_browser_task` are long-running SSE streams where this is most visible. Truly aborting the
-    request needs core to thread the signal into the tool bodies (`client.*` calls accept
-    `RequestOptions.signal`); that is a core change, tracked separately.
+    the tool promise. The wrapper threads that signal into the core call (`spec.execute(parsed, {
+    signal })`), and core forwards it to the SDK as `RequestOptions.signal`, so cancelling a tool aborts
+    the underlying Tabstack request (and stops billing), not just the agent loop. This matters most for
+    `research_question` and `automate_browser_task`, which are long-running SSE streams.
   - `execute` returns Pi's `AgentToolResult`: `{ content: [{ type: "text", text }], details }`. String
     results (`extract_page_content`) pass through; object results are `JSON.stringify`ed.
 - Exports, from one `buildToolDefs(specs)` builder so every path shares the same wrapping:

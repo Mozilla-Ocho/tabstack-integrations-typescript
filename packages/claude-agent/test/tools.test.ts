@@ -101,7 +101,7 @@ describe("@tabstack/claude-agent", () => {
     const result = await tools[toolNames.extractPageContent]?.handler({
       url: "https://example.com",
     });
-    expect(client.extract.markdown).toHaveBeenCalledWith({ url: "https://example.com" });
+    expect(client.extract.markdown).toHaveBeenCalledWith({ url: "https://example.com" }, undefined);
     expect(result).toEqual({ content: [{ type: "text", text: "# Hello" }] });
   });
 

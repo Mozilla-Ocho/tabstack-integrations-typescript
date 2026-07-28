@@ -19,6 +19,7 @@ import type {
   GenerateStructuredDataResult,
   ResearchQuestionInput,
   ResearchResult,
+  TabstackToolExecuteOptions,
   TabstackToolSpec,
 } from "./types.js";
 
@@ -79,20 +80,33 @@ function fetchOptions(input: {
 }
 
 /**
+ * Build the SDK `RequestOptions` from the per-call tool options. Currently just
+ * forwards the `AbortSignal` so a cancelled tool call aborts the network request.
+ * Returns `undefined` when there is nothing to pass, so the SDK uses its defaults.
+ */
+function requestOptions(options?: TabstackToolExecuteOptions) {
+  return options?.signal ? { signal: options.signal } : undefined;
+}
+
+/**
  * Extract structured data from a URL according to a JSON-encoded JSON Schema.
  * Calls `client.extract.json`.
  */
 export async function extractStructuredData(
   input: ExtractStructuredDataInput,
   client: TabstackClient,
+  options?: TabstackToolExecuteOptions,
 ): Promise<ExtractStructuredDataResult> {
   try {
     const jsonSchema: unknown = JSON.parse(input.json_schema_json);
-    const result = await client.extract.json({
-      url: input.url,
-      json_schema: jsonSchema,
-      ...fetchOptions(input),
-    });
+    const result = await client.extract.json(
+      {
+        url: input.url,
+        json_schema: jsonSchema,
+        ...fetchOptions(input),
+      },
+      requestOptions(options),
+    );
     return result as ExtractStructuredDataResult;
   } catch (err) {
     throw normalizeError(err);
@@ -103,9 +117,13 @@ export async function extractStructuredData(
 export async function extractPageContent(
   input: ExtractPageContentInput,
   client: TabstackClient,
+  options?: TabstackToolExecuteOptions,
 ): Promise<ExtractPageContentResult> {
   try {
-    const result = await client.extract.markdown({ url: input.url, ...fetchOptions(input) });
+    const result = await client.extract.markdown(
+      { url: input.url, ...fetchOptions(input) },
+      requestOptions(options),
+    );
     return result.content;
   } catch (err) {
     throw normalizeError(err);
@@ -119,13 +137,17 @@ export async function extractPageContent(
 export async function researchQuestion(
   input: ResearchQuestionInput,
   client: TabstackClient,
+  options?: TabstackToolExecuteOptions,
 ): Promise<ResearchResult> {
   try {
-    const stream = await client.agent.research({
-      query: input.query,
-      mode: input.mode ?? "balanced",
-      ...(input.nocache !== undefined ? { nocache: input.nocache } : {}),
-    });
+    const stream = await client.agent.research(
+      {
+        query: input.query,
+        mode: input.mode ?? "balanced",
+        ...(input.nocache !== undefined ? { nocache: input.nocache } : {}),
+      },
+      requestOptions(options),
+    );
     for await (const event of stream) {
       if (event.event === "error") {
         const message = event.data.message || "unknown error";
@@ -152,15 +174,19 @@ export async function researchQuestion(
 export async function generateStructuredData(
   input: GenerateStructuredDataInput,
   client: TabstackClient,
+  options?: TabstackToolExecuteOptions,
 ): Promise<GenerateStructuredDataResult> {
   try {
     const jsonSchema: unknown = JSON.parse(input.json_schema_json);
-    const result = await client.generate.json({
-      url: input.url,
-      instructions: input.instructions,
-      json_schema: jsonSchema,
-      ...fetchOptions(input),
-    });
+    const result = await client.generate.json(
+      {
+        url: input.url,
+        instructions: input.instructions,
+        json_schema: jsonSchema,
+        ...fetchOptions(input),
+      },
+      requestOptions(options),
+    );
     return result as GenerateStructuredDataResult;
   } catch (err) {
     throw normalizeError(err);
@@ -174,21 +200,25 @@ export async function generateStructuredData(
 export async function automateBrowserTask(
   input: AutomateBrowserTaskInput,
   client: TabstackClient,
+  options?: TabstackToolExecuteOptions,
 ): Promise<AutomateBrowserTaskResult> {
   try {
-    const stream = await client.agent.automate({
-      task: input.task,
-      // Interactive mode is intentionally left off: a one-shot tool cannot
-      // service the human-in-the-loop form-data callback (`agent.automateInput`).
-      ...(input.url !== undefined ? { url: input.url } : {}),
-      ...(input.guardrails !== undefined ? { guardrails: input.guardrails } : {}),
-      ...(input.data !== undefined ? { data: input.data } : {}),
-      ...(input.country !== undefined ? { geo_target: { country: input.country } } : {}),
-      ...(input.max_iterations !== undefined ? { maxIterations: input.max_iterations } : {}),
-      ...(input.max_validation_attempts !== undefined
-        ? { maxValidationAttempts: input.max_validation_attempts }
-        : {}),
-    });
+    const stream = await client.agent.automate(
+      {
+        task: input.task,
+        // Interactive mode is intentionally left off: a one-shot tool cannot
+        // service the human-in-the-loop form-data callback (`agent.automateInput`).
+        ...(input.url !== undefined ? { url: input.url } : {}),
+        ...(input.guardrails !== undefined ? { guardrails: input.guardrails } : {}),
+        ...(input.data !== undefined ? { data: input.data } : {}),
+        ...(input.country !== undefined ? { geo_target: { country: input.country } } : {}),
+        ...(input.max_iterations !== undefined ? { maxIterations: input.max_iterations } : {}),
+        ...(input.max_validation_attempts !== undefined
+          ? { maxValidationAttempts: input.max_validation_attempts }
+          : {}),
+      },
+      requestOptions(options),
+    );
 
     const extracted: string[] = [];
     const pagesVisited: AutomateVisitedPage[] = [];
@@ -260,31 +290,31 @@ export function createTabstackTools(client?: TabstackClient): TabstackTools {
       name: NAMES.extractStructuredData,
       description: DESCRIPTIONS.extractStructuredData,
       schema: extractStructuredDataSchema,
-      execute: (input) => extractStructuredData(input, resolve()),
+      execute: (input, options) => extractStructuredData(input, resolve(), options),
     },
     extractPageContent: {
       name: NAMES.extractPageContent,
       description: DESCRIPTIONS.extractPageContent,
       schema: extractPageContentSchema,
-      execute: (input) => extractPageContent(input, resolve()),
+      execute: (input, options) => extractPageContent(input, resolve(), options),
     },
     researchQuestion: {
       name: NAMES.researchQuestion,
       description: DESCRIPTIONS.researchQuestion,
       schema: researchQuestionSchema,
-      execute: (input) => researchQuestion(input, resolve()),
+      execute: (input, options) => researchQuestion(input, resolve(), options),
     },
     generateStructuredData: {
       name: NAMES.generateStructuredData,
       description: DESCRIPTIONS.generateStructuredData,
       schema: generateStructuredDataSchema,
-      execute: (input) => generateStructuredData(input, resolve()),
+      execute: (input, options) => generateStructuredData(input, resolve(), options),
     },
     automateBrowserTask: {
       name: NAMES.automateBrowserTask,
       description: DESCRIPTIONS.automateBrowserTask,
       schema: automateBrowserTaskSchema,
-      execute: (input) => automateBrowserTask(input, resolve()),
+      execute: (input, options) => automateBrowserTask(input, resolve(), options),
     },
   };
 }

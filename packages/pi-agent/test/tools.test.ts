@@ -107,7 +107,7 @@ describe("@tabstack/pi-agent", () => {
     // extract_page_content yields a string; it passes through as text content.
     expect(result.content).toEqual([{ type: "text", text: "# Hello" }]);
     expect(result.details).toBe("# Hello");
-    expect(client.extract.markdown).toHaveBeenCalledWith({ url: "https://example.com" });
+    expect(client.extract.markdown).toHaveBeenCalledWith({ url: "https://example.com" }, undefined);
   });
 
   it("serializes object results to JSON text", async () => {
@@ -133,21 +133,35 @@ describe("@tabstack/pi-agent", () => {
     expect(client.extract.markdown).not.toHaveBeenCalled();
   });
 
-  it("rejects immediately when the abort signal is already aborted", async () => {
-    const tools = registerTools(mockClient());
-    await expect(
-      byName(tools, toolNames.extractPageContent).execute(
-        "call-4",
-        { url: "https://example.com" },
-        AbortSignal.abort(),
-      ),
-    ).rejects.toMatchObject({ name: "TabstackToolError" });
+  it("forwards Pi's abort signal to the SDK request", async () => {
+    const client = mockClient();
+    const tools = registerTools(client);
+    const signal = new AbortController().signal;
+    await byName(tools, toolNames.extractPageContent).execute(
+      "call-4",
+      { url: "https://example.com" },
+      signal,
+    );
+    expect(client.extract.markdown).toHaveBeenCalledWith(
+      { url: "https://example.com" },
+      { signal },
+    );
   });
 
-  it("rejects when the signal aborts mid-call, unblocking the session", async () => {
-    // A client whose call never settles, so only the abort can resolve the race.
+  it("aborts the underlying request when the signal fires", async () => {
+    // A signal-aware client that rejects on abort, standing in for the SDK. This
+    // exercises that the threaded signal actually cancels the call, surfaced as a
+    // normalized TabstackToolError.
     const client = {
-      extract: { json: vi.fn(), markdown: vi.fn().mockReturnValue(new Promise(() => {})) },
+      extract: {
+        json: vi.fn(),
+        markdown: vi.fn(
+          (_body: unknown, opts?: { signal?: AbortSignal }) =>
+            new Promise((_resolve, reject) => {
+              opts?.signal?.addEventListener("abort", () => reject(new Error("aborted")));
+            }),
+        ),
+      },
       generate: { json: vi.fn() },
       agent: { research: vi.fn(), automate: vi.fn() },
     } as unknown as TabstackClient;

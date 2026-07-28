@@ -94,12 +94,15 @@ describe("@tabstack/langchain", () => {
       nocache: true,
       country: "GB",
     });
-    expect(client.extract.markdown).toHaveBeenCalledWith({
-      url: "https://example.com",
-      effort: "max",
-      nocache: true,
-      geo_target: { country: "GB" },
-    });
+    expect(client.extract.markdown).toHaveBeenCalledWith(
+      {
+        url: "https://example.com",
+        effort: "max",
+        nocache: true,
+        geo_target: { country: "GB" },
+      },
+      undefined,
+    );
     expect(result).toBe("# Hello");
   });
 
@@ -109,7 +112,10 @@ describe("@tabstack/langchain", () => {
     const research = tools[2];
     if (!research) throw new Error("expected research_question tool");
     const result = await research.invoke({ query: "why?" });
-    expect(client.agent.research).toHaveBeenCalledWith({ query: "why?", mode: "balanced" });
+    expect(client.agent.research).toHaveBeenCalledWith(
+      { query: "why?", mode: "balanced" },
+      undefined,
+    );
     expect(result).toEqual({
       answer: "The answer.",
       sources: [
@@ -130,12 +136,15 @@ describe("@tabstack/langchain", () => {
       json_schema_json: '{"type":"object"}',
       effort: "min",
     });
-    expect(client.generate.json).toHaveBeenCalledWith({
-      url: "https://example.com",
-      instructions: "summarize",
-      json_schema: { type: "object" },
-      effort: "min",
-    });
+    expect(client.generate.json).toHaveBeenCalledWith(
+      {
+        url: "https://example.com",
+        instructions: "summarize",
+        json_schema: { type: "object" },
+        effort: "min",
+      },
+      undefined,
+    );
     expect(result).toEqual({ summary: "short" });
   });
 
@@ -153,13 +162,16 @@ describe("@tabstack/langchain", () => {
       max_validation_attempts: 2,
     });
 
-    expect(client.agent.automate).toHaveBeenCalledWith({
-      task: "Look something up",
-      url: "https://example.com",
-      geo_target: { country: "US" },
-      maxIterations: 5,
-      maxValidationAttempts: 2,
-    });
+    expect(client.agent.automate).toHaveBeenCalledWith(
+      {
+        task: "Look something up",
+        url: "https://example.com",
+        geo_target: { country: "US" },
+        maxIterations: 5,
+        maxValidationAttempts: 2,
+      },
+      undefined,
+    );
     expect(result).toMatchObject({
       answer: "Done.",
       success: true,
