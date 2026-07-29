@@ -65,7 +65,7 @@ describe("@tabstack/eve", () => {
       {} as never,
     );
     expect(result).toBe("# Hello");
-    expect(client.extract.markdown).toHaveBeenCalledWith({ url: "https://example.com" });
+    expect(client.extract.markdown).toHaveBeenCalledWith({ url: "https://example.com" }, undefined);
   });
 
   it("rejects schema-violating input as a normalized TabstackToolError", async () => {

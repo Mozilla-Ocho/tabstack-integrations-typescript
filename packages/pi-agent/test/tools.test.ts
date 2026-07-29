@@ -107,7 +107,7 @@ describe("@tabstack/pi-agent", () => {
     // extract_page_content yields a string; it passes through as text content.
     expect(result.content).toEqual([{ type: "text", text: "# Hello" }]);
     expect(result.details).toBe("# Hello");
-    expect(client.extract.markdown).toHaveBeenCalledWith({ url: "https://example.com" });
+    expect(client.extract.markdown).toHaveBeenCalledWith({ url: "https://example.com" }, undefined);
   });
 
   it("serializes object results to JSON text", async () => {
@@ -133,19 +133,87 @@ describe("@tabstack/pi-agent", () => {
     expect(client.extract.markdown).not.toHaveBeenCalled();
   });
 
-  it("rejects immediately when the abort signal is already aborted", async () => {
-    const tools = registerTools(mockClient());
-    await expect(
-      byName(tools, toolNames.extractPageContent).execute(
-        "call-4",
-        { url: "https://example.com" },
-        AbortSignal.abort(),
-      ),
-    ).rejects.toMatchObject({ name: "TabstackToolError" });
+  it("forwards Pi's abort signal to the SDK request", async () => {
+    const client = mockClient();
+    const tools = registerTools(client);
+    const signal = new AbortController().signal;
+    await byName(tools, toolNames.extractPageContent).execute(
+      "call-4",
+      { url: "https://example.com" },
+      signal,
+    );
+    expect(client.extract.markdown).toHaveBeenCalledWith(
+      { url: "https://example.com" },
+      { signal },
+    );
   });
 
-  it("rejects when the signal aborts mid-call, unblocking the session", async () => {
-    // A client whose call never settles, so only the abort can resolve the race.
+  it("aborts a non-streaming request when the signal fires", async () => {
+    // Non-streaming SDK calls throw APIUserAbortError on abort. A signal-aware
+    // client that rejects stands in for that, surfaced as a normalized error.
+    const client = {
+      extract: {
+        json: vi.fn(),
+        markdown: vi.fn(
+          (_body: unknown, opts?: { signal?: AbortSignal }) =>
+            new Promise((_resolve, reject) => {
+              opts?.signal?.addEventListener("abort", () => reject(new Error("aborted")));
+            }),
+        ),
+      },
+      generate: { json: vi.fn() },
+      agent: { research: vi.fn(), automate: vi.fn() },
+    } as unknown as TabstackClient;
+    const tools = registerTools(client);
+    const controller = new AbortController();
+    const pending = byName(tools, toolNames.extractPageContent).execute(
+      "call-5",
+      { url: "https://example.com" },
+      controller.signal,
+    );
+    controller.abort();
+    await expect(pending).rejects.toMatchObject({ name: "TabstackToolError" });
+  });
+
+  it("aborts a streaming tool (research) when the signal fires", async () => {
+    // Stainless streams swallow aborts: the async iterator returns rather than
+    // throwing, so core's for-await ends normally. Without the post-loop abort
+    // check this resolves with the "did not complete" fallback instead of failing.
+    const client = {
+      extract: { json: vi.fn(), markdown: vi.fn() },
+      generate: { json: vi.fn() },
+      agent: {
+        research: vi.fn((_body: unknown, opts?: { signal?: AbortSignal }) =>
+          Promise.resolve({
+            async *[Symbol.asyncIterator]() {
+              await new Promise<void>((resolve) => {
+                if (opts?.signal?.aborted) {
+                  resolve();
+                  return;
+                }
+                opts?.signal?.addEventListener("abort", () => resolve(), { once: true });
+              });
+            },
+          }),
+        ),
+        automate: vi.fn(),
+      },
+    } as unknown as TabstackClient;
+    const tools = registerTools(client);
+    const controller = new AbortController();
+    const pending = byName(tools, toolNames.researchQuestion).execute(
+      "call-6",
+      { query: "why?" },
+      controller.signal,
+    );
+    controller.abort();
+    await expect(pending).rejects.toMatchObject({ name: "TabstackToolError" });
+  });
+
+  it("rejects promptly on abort even while the request is still pending", async () => {
+    // Simulates the SDK stuck in a retry backoff (its sleep is not signal-aware):
+    // the client promise never settles, so only the raced signal can unblock the
+    // Pi session. Forwarding the signal alone would leave it wedged here.
     const client = {
       extract: { json: vi.fn(), markdown: vi.fn().mockReturnValue(new Promise(() => {})) },
       generate: { json: vi.fn() },
@@ -154,7 +222,7 @@ describe("@tabstack/pi-agent", () => {
     const tools = registerTools(client);
     const controller = new AbortController();
     const pending = byName(tools, toolNames.extractPageContent).execute(
-      "call-5",
+      "call-7",
       { url: "https://example.com" },
       controller.signal,
     );

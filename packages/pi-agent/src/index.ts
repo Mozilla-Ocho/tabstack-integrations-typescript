@@ -19,16 +19,14 @@ import { schemaToJsonSchema } from "./schema.js";
 /**
  * Reject as soon as `signal` aborts, otherwise settle with `promise`.
  *
- * Pi passes an `AbortSignal` to `execute` and blocks the agent loop on the tool
- * promise, so without this a cancelled `research_question` or
- * `automate_browser_task` (both long-running SSE streams) would leave the session
- * wedged until the call finished. Racing the signal lets a cancel unblock the
+ * The signal is also threaded into the core call so the underlying request is
+ * cancelled (see `toPiTool`), but that is not enough on its own to unblock Pi
+ * promptly: the SDK only observes the signal at the `fetch` boundary, so an abort
+ * raised during a retry backoff (its `sleep` is not signal-aware) is not seen
+ * until the sleep elapses, which can be many seconds on a `429 Retry-After`. Pi
+ * blocks its agent loop on the tool promise, so racing the signal here bounds the
+ * cancel latency: forwarding `{ signal }` stops the billing, racing unblocks the
  * session immediately.
- *
- * Caveat: core's `execute` does not yet accept a signal, so the underlying SDK
- * request is not itself cancelled and keeps running (and billing) until it
- * completes. Truly aborting the request needs core to thread the signal into the
- * tool bodies; see the package AGENTS.md.
  */
 function raceAbort<T>(promise: Promise<T>, signal: AbortSignal | undefined): Promise<T> {
   if (!signal) return promise;
@@ -92,8 +90,11 @@ const LABELS: Record<string, string> = {
  * (`extract_page_content`) pass through; object results are serialized to JSON
  * text for the model.
  *
- * Pi's `AbortSignal` is raced against the core call so a cancel unblocks the
- * session (see `raceAbort` for the billing caveat).
+ * Pi's `AbortSignal` is both threaded into the core call (so cancelling aborts the
+ * underlying Tabstack request and stops billing) and raced against the result (so
+ * the Pi session unblocks immediately even if the SDK is mid-retry-backoff). This
+ * matters most for `research_question` and `automate_browser_task`, the
+ * long-running SSE streams.
  */
 function toPiTool<TInput, TOutput>(spec: TabstackToolSpec<TInput, TOutput>): ToolDefinition {
   return defineTool({
@@ -108,7 +109,7 @@ function toPiTool<TInput, TOutput>(spec: TabstackToolSpec<TInput, TOutput>): Too
       } catch (err) {
         throw normalizeError(err);
       }
-      const result = await raceAbort(spec.execute(parsed), signal);
+      const result = await raceAbort(spec.execute(parsed, { signal }), signal);
       const text = typeof result === "string" ? result : JSON.stringify(result);
       return { content: [{ type: "text" as const, text }], details: result };
     },

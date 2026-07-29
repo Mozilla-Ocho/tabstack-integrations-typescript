@@ -64,7 +64,7 @@ describe("@tabstack/llamaindex", () => {
     // of every tool input; cast the single-tool input to satisfy it.
     const result = await spec?.call({ url: "https://example.com" } as never);
     expect(result).toBe("# Hello");
-    expect(client.extract.markdown).toHaveBeenCalledWith({ url: "https://example.com" });
+    expect(client.extract.markdown).toHaveBeenCalledWith({ url: "https://example.com" }, undefined);
   });
 
   it("fails fast on invalid input without reaching the SDK client", async () => {

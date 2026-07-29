@@ -36,5 +36,6 @@ export type {
   ResearchQuestionInput,
   ResearchResult,
   ResearchSource,
+  TabstackToolExecuteOptions,
   TabstackToolSpec,
 } from "./types.js";

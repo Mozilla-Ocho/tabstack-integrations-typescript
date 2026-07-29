@@ -130,6 +130,9 @@ a tool result rather than aborting the session.
   input, so it never blocks. It returns the final answer plus the data it extracted and the pages it
   visited.
 - The client is created lazily, so loading the extension never requires an API key to be set.
+- **Cancellation works.** Pi's abort signal is threaded into the Tabstack request, so cancelling a tool
+  call (for example a long `research_question` or `automate_browser_task`) aborts the request and stops
+  billing, not just the agent loop.
 - **Requires Zod 4.** The adapter uses Zod 4's native `z.toJSONSchema` to derive each tool's Typebox
   parameters.
 

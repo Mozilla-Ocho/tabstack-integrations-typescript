@@ -77,7 +77,7 @@ describe("@tabstack/mastra", () => {
     // The keyed tool object gives `execute` a union input type across all tools,
     // so cast the single-tool input to satisfy it.
     const result = await execute({ url: "https://example.com" } as never, undefined as never);
-    expect(client.extract.markdown).toHaveBeenCalledWith({ url: "https://example.com" });
+    expect(client.extract.markdown).toHaveBeenCalledWith({ url: "https://example.com" }, undefined);
     expect(result).toBe("# Hello");
   });
 
