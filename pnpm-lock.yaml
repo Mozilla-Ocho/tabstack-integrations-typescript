@@ -194,16 +194,16 @@ importers:
     dependencies:
       '@ai-sdk/anthropic':
         specifier: ^2.0.0
-        version: 2.0.92(zod@3.25.76)
+        version: 2.0.92(zod@4.4.3)
       '@tabstack/ai':
         specifier: workspace:*
         version: link:../../packages/vercel-ai
       ai:
         specifier: ^5.0.0
-        version: 5.0.205(zod@3.25.76)
+        version: 5.0.205(zod@4.4.3)
       zod:
-        specifier: ^3.24.0
-        version: 3.25.76
+        specifier: ^4.0.0
+        version: 4.4.3
     devDependencies:
       '@types/node':
         specifier: ^22.10.0
@@ -3667,18 +3667,11 @@ snapshots:
     optionalDependencies:
       express: 5.2.1
 
-  '@ai-sdk/anthropic@2.0.92(zod@3.25.76)':
+  '@ai-sdk/anthropic@2.0.92(zod@4.4.3)':
     dependencies:
       '@ai-sdk/provider': 2.0.3
-      '@ai-sdk/provider-utils': 3.0.31(zod@3.25.76)
-      zod: 3.25.76
-
-  '@ai-sdk/gateway@2.0.104(zod@3.25.76)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.3
-      '@ai-sdk/provider-utils': 3.0.27(zod@3.25.76)
-      '@vercel/oidc': 3.1.0
-      zod: 3.25.76
+      '@ai-sdk/provider-utils': 3.0.31(zod@4.4.3)
+      zod: 4.4.3
 
   '@ai-sdk/gateway@2.0.104(zod@4.4.3)':
     dependencies:
@@ -3701,13 +3694,6 @@ snapshots:
       secure-json-parse: 2.7.0
       zod: 4.4.3
 
-  '@ai-sdk/provider-utils@3.0.27(zod@3.25.76)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.3
-      '@standard-schema/spec': 1.1.0
-      eventsource-parser: 3.1.0
-      zod: 3.25.76
-
   '@ai-sdk/provider-utils@3.0.27(zod@4.4.3)':
     dependencies:
       '@ai-sdk/provider': 2.0.3
@@ -3722,13 +3708,13 @@ snapshots:
       eventsource-parser: 3.1.0
       zod: 4.4.3
 
-  '@ai-sdk/provider-utils@3.0.31(zod@3.25.76)':
+  '@ai-sdk/provider-utils@3.0.31(zod@4.4.3)':
     dependencies:
       '@ai-sdk/provider': 2.0.3
       '@standard-schema/spec': 1.1.0
       eventsource-parser: 3.1.0
       undici: 5.29.0
-      zod: 3.25.76
+      zod: 4.4.3
 
   '@ai-sdk/provider-utils@4.0.38(zod@4.4.3)':
     dependencies:
@@ -5105,14 +5091,6 @@ snapshots:
   acorn@8.17.0: {}
 
   agent-base@7.1.4: {}
-
-  ai@5.0.205(zod@3.25.76):
-    dependencies:
-      '@ai-sdk/gateway': 2.0.104(zod@3.25.76)
-      '@ai-sdk/provider': 2.0.3
-      '@ai-sdk/provider-utils': 3.0.27(zod@3.25.76)
-      '@opentelemetry/api': 1.9.0
-      zod: 3.25.76
 
   ai@5.0.205(zod@4.4.3):
     dependencies:

@@ -38,7 +38,8 @@ tool and then use the result to answer.
 
 - The model is `anthropic("claude-sonnet-4-6")`. Swap the provider in `src/index.ts` for any the AI
   SDK supports (for example `@ai-sdk/openai`), install that provider package, and set its API key.
-- The demo pins `ai@^5` and `zod@^3`. `@tabstack/ai` supports the AI SDK v5+ and both Zod 3 and Zod
-  4, so bump them if you prefer.
+- The demo pins `ai@^5`. `@tabstack/ai` supports the AI SDK v5+, so bump it if you prefer.
+- Requires Zod 4: `@tabstack/ai` declares `zod@^4` as a peer dependency, so the demo pins `zod@^4`.
+  Mixing Zod majors between the app and the adapter breaks schema interop.
 - `pnpm --filter @tabstack/vercel-ai-demo typecheck` needs `@tabstack/ai` built first (it resolves
   the adapter via its `dist`).
