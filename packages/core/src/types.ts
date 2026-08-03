@@ -64,6 +64,16 @@ export interface ResearchResult {
 }
 
 /**
+ * Per-call options threaded from an adapter into a tool body and on to the SDK.
+ * `signal` cancels the underlying request; adapters pass the framework's own
+ * `AbortSignal` here so a cancelled tool call aborts the network request (and
+ * stops billing), not just the surrounding agent loop.
+ */
+export interface TabstackToolExecuteOptions {
+  signal?: AbortSignal;
+}
+
+/**
  * A framework-agnostic Tabstack tool: its name, description, Zod input schema,
  * and an async execute body. Adapters map these straight onto a framework's own
  * tool primitive.
@@ -72,5 +82,5 @@ export interface TabstackToolSpec<TInput, TOutput> {
   name: string;
   description: string;
   schema: z.ZodType<TInput>;
-  execute: (input: TInput) => Promise<TOutput>;
+  execute: (input: TInput, options?: TabstackToolExecuteOptions) => Promise<TOutput>;
 }

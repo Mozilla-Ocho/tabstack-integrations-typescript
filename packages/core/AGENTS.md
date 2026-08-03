@@ -25,8 +25,12 @@ const specs = createTabstackTools(client); // client optional; resolves the lazy
 ```
 
 `createTabstackTools()` returns one `{ name, description, schema, execute }` spec per tool. Adapters
-map these onto their framework's `tool()` primitive. `execute(input)` runs the SDK call and returns
-a typed object (or string for markdown).
+map these onto their framework's `tool()` primitive. `execute(input, options?)` runs the SDK call and
+returns a typed object (or string for markdown). `options` is `TabstackToolExecuteOptions` (currently
+`{ signal? }`); adapters pass the framework's `AbortSignal` so a cancelled tool aborts the underlying
+request. Streaming bodies (`researchQuestion`, `automateBrowserTask`) also re-check `options.signal`
+after the event loop, because the SDK swallows an aborted stream and would otherwise fall through to a
+placeholder result.
 
 ## Rules specific to this package
 
@@ -35,7 +39,9 @@ a typed object (or string for markdown).
 - `@tabstack/sdk` is a real dependency; `zod` is a peer dependency (the consumer provides it). Both
   stay external in the build; only this package's own source is bundled into adapters.
 - The client must stay lazy: importing this package must not require `TABSTACK_API_KEY`.
-- Tool bodies take `(input, client)` and wrap failures with `normalizeError`.
+- Tool bodies take `(input, client, options?)`, forward `requestOptions(options)` to the SDK call, and
+  wrap failures with `normalizeError`. Streaming bodies throw `TabstackToolError` after the loop when
+  `options.signal` is aborted, so a cancel is a failure rather than the fallback return.
 
 ## Adding a tool
 

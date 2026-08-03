@@ -22,33 +22,42 @@ export type { TabstackClient, TabstackClientConfig } from "@tabstack/integration
  * Build the named tool object from a set of core specs. Each tool is wrapped in
  * the Vercel AI SDK `tool()`; the v5+ API names the input schema `inputSchema`
  * and infers types from the concrete Zod schema and execute body.
+ *
+ * The AI SDK passes an `abortSignal` in the execute options; it is forwarded to
+ * the core body as `signal` so a cancelled generation aborts the underlying
+ * Tabstack request, not just the model call.
  */
 function buildTools(specs: ReturnType<typeof createTabstackTools>) {
   return {
     [specs.extractStructuredData.name]: tool({
       description: specs.extractStructuredData.description,
       inputSchema: specs.extractStructuredData.schema,
-      execute: specs.extractStructuredData.execute,
+      execute: (input, { abortSignal }) =>
+        specs.extractStructuredData.execute(input, { signal: abortSignal }),
     }),
     [specs.extractPageContent.name]: tool({
       description: specs.extractPageContent.description,
       inputSchema: specs.extractPageContent.schema,
-      execute: specs.extractPageContent.execute,
+      execute: (input, { abortSignal }) =>
+        specs.extractPageContent.execute(input, { signal: abortSignal }),
     }),
     [specs.researchQuestion.name]: tool({
       description: specs.researchQuestion.description,
       inputSchema: specs.researchQuestion.schema,
-      execute: specs.researchQuestion.execute,
+      execute: (input, { abortSignal }) =>
+        specs.researchQuestion.execute(input, { signal: abortSignal }),
     }),
     [specs.generateStructuredData.name]: tool({
       description: specs.generateStructuredData.description,
       inputSchema: specs.generateStructuredData.schema,
-      execute: specs.generateStructuredData.execute,
+      execute: (input, { abortSignal }) =>
+        specs.generateStructuredData.execute(input, { signal: abortSignal }),
     }),
     [specs.automateBrowserTask.name]: tool({
       description: specs.automateBrowserTask.description,
       inputSchema: specs.automateBrowserTask.schema,
-      execute: specs.automateBrowserTask.execute,
+      execute: (input, { abortSignal }) =>
+        specs.automateBrowserTask.execute(input, { signal: abortSignal }),
     }),
   };
 }

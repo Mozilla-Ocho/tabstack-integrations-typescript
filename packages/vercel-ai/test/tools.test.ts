@@ -68,7 +68,7 @@ describe("@tabstack/ai", () => {
       { url: "https://example.com" },
       { toolCallId: "test", messages: [] },
     );
-    expect(client.extract.markdown).toHaveBeenCalledWith({ url: "https://example.com" });
+    expect(client.extract.markdown).toHaveBeenCalledWith({ url: "https://example.com" }, undefined);
     expect(result).toBe("# Hello");
   });
 });

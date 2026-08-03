@@ -18,6 +18,7 @@ packages/
   claude-agent/  @tabstack/claude-agent        Claude Agent SDK adapter (in-process MCP server).
   openai-agents/ @tabstack/openai-agents       OpenAI Agents SDK adapter.
   llamaindex/    @tabstack/llamaindex          LlamaIndex.TS adapter.
+  pi-agent/      @tabstack/pi-agent            Pi coding agent extension.
 ```
 
 ## Why it is structured this way
