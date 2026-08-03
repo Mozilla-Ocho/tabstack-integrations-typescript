@@ -38,7 +38,7 @@ With no argument it asks a default question. The agent decides which Tabstack to
 
 - The model is OpenAI `gpt-4o`, set via `Settings.llm`. Swap `openai({ model })` in `src/index.ts`
   for any provider LlamaIndex supports, install that provider package, and set its API key.
-- The demo pins `zod@^3`, but `@tabstack/llamaindex` supports both Zod 3 and Zod 4, so bump it if you
-  prefer.
+- Requires Zod 4: `@tabstack/llamaindex` declares `zod@^4` as a peer dependency, so the demo pins
+  `zod@^4`. Mixing Zod majors between the app and the adapter breaks schema interop.
 - `pnpm --filter @tabstack/llamaindex-demo typecheck` needs `@tabstack/llamaindex` built first (it
   resolves the adapter via its `dist`).

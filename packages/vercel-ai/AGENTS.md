@@ -41,7 +41,8 @@ const { text } = await generateText({ model, tools: tabstackTools, prompt });
 
 ## Rules specific to this package
 
-- `ai` (>=5.0.0, v6 target) and `zod` are **peer dependencies** (+ dev dependencies). Never direct.
+- `ai` (>=5.0.0, v6 target) and `zod` (^4.0.0) are **peer dependencies** (+ dev dependencies). Never
+  direct. Zod 4 only, like the rest of the repo.
 - `@tabstack/integrations-core` is a dev dependency, bundled via tsup `noExternal`.
 - Names/descriptions/schemas come from core. Do not redefine them here.
 - When core adds a tool, add an entry in `buildTools` in `src/index.ts` and a test.

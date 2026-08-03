@@ -10,9 +10,9 @@ function propertyKeys(schema: Record<string, unknown>): string[] {
   return Object.keys((schema.properties as Record<string, unknown>) ?? {});
 }
 
-// `vitest.config.ts` aliases `zod` to this package's Zod 4, so core's schemas
-// (imported from core's dist) are constructed with Zod 4 and `z.toJSONSchema`
-// runs against them, exactly as it does in the published, core-inlined bundle.
+// The repo is Zod 4 only, so core's schemas (imported from core's dist) are
+// constructed with the same single Zod 4 instance `z.toJSONSchema` runs against,
+// exactly as they are in the published, core-inlined bundle.
 describe("schemaToJsonSchema", () => {
   it("converts a core schema to a draft-7 JSON Schema object, keeping every property", () => {
     const json = schemaToJsonSchema(extractStructuredDataSchema);

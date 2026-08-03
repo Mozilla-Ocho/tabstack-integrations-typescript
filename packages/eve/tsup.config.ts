@@ -6,7 +6,7 @@ export default defineConfig({
   dts: true,
   clean: true,
   sourcemap: true,
-  // The private core package is bundled in. @tabstack/sdk, eve, zod, and
-  // zod-to-json-schema stay external (declared as dependency / peer dependencies).
+  // The private core package is bundled in. @tabstack/sdk, eve, and zod stay
+  // external (declared as dependency / peer dependencies).
   noExternal: ["@tabstack/integrations-core"],
 });

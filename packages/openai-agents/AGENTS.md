@@ -54,11 +54,8 @@ const result = await run(agent, "What are Vercel's pricing plans, with sources?"
   Never direct. Zod 4 is required: the SDK depends on it and the adapter uses `z.toJSONSchema`.
 - `@tabstack/sdk` is a direct dependency.
 - `@tabstack/integrations-core` is a dev dependency, bundled via tsup `noExternal`.
-- `vitest.config.ts` aliases `zod` to this package's single Zod 4 instance. Reason: the built package
-  inlines core (so core's schemas are constructed with this adapter's Zod 4), but tests import core's
-  dist, which otherwise resolves core's own in-repo Zod 3. Two Zod majors do not interoperate
-  (`z.toJSONSchema` throws on a Zod 3 schema), so the alias dedupes them to Zod 4, matching the bundle.
-  Do not remove it, and do not add a Zod 3 fallback: the SDK cannot load under Zod 3.
+- Zod 4 is required end to end: the SDK cannot load under Zod 3, and core is Zod 4 only, so
+  `z.toJSONSchema` runs against a Zod 4 schema with no version detection or fallback.
 - Names/descriptions/schemas come from core. Do not redefine them here.
 - When core adds a tool, add an entry in `buildTools`, a matching `*Tool` const export, add it to the
   `tabstackTools` array, and add a test.

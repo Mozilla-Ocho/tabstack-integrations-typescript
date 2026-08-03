@@ -21,7 +21,8 @@ npm install @tabstack/ai ai zod
 ```
 
 `ai` (v5 or later, v6 ready) and `zod` are peer dependencies, so your app's single instance of each
-is shared. Set your API key (get one at [console.tabstack.ai](https://console.tabstack.ai)):
+is shared. **Zod 4 is required**: core's published schema types are Zod 4 shaped and do not typecheck
+under a Zod 3 install. Set your API key (get one at [console.tabstack.ai](https://console.tabstack.ai)):
 
 ```bash
 export TABSTACK_API_KEY="your-key-here"

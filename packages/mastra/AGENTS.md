@@ -49,9 +49,19 @@ tool is also exported individually (`extractStructuredDataTool`, etc.). The core
 
 ## Rules specific to this package
 
-- `@mastra/core` (>=1.0.0) and `zod` are **peer dependencies** (+ dev dependencies). Never direct.
+- `@mastra/core` (>=1.0.0) and `zod` (^4.0.0) are **peer dependencies** (+ dev dependencies). Never
+  direct. Zod 4 only, like the rest of the repo.
 - `@tabstack/integrations-core` is a dev dependency, bundled via tsup `noExternal`.
 - No `zod-to-json-schema`: Mastra takes Zod directly, so there is nothing to convert.
+- **Keep the `createTool` return type inferred.** The exported tools and `tabstackTools` carry their
+  concrete schema generics, so consumers get key and input checking. An earlier revision widened them
+  to `ToolAction<any, any>` plus a `Record<string, any>` aggregate to dodge TS2589 ("type
+  instantiation is excessively deep") at `new Agent({ tools })`. That TS2589 was a **Zod major
+  mismatch**, not a real depth limit: the consumer app was on Zod 3 while the adapter was on Zod 4, so
+  `Agent<TTools>` mapped tools across two incompatible Zod type trees. With the app on Zod 4 the
+  concrete types compile (verified via `apps/mastra-demo`, including `new Mastra({ agents })` and
+  `generate` with `structuredOutput`). If TS2589 reappears, check for a second Zod major in the
+  consumer's install before reaching for `any`.
 - Names/descriptions/schemas come from core. Do not redefine them here.
 - When core adds a tool, add an entry in `buildTools`, a matching `*Tool` const export, an entry in
   `tabstackTools`, and a test.

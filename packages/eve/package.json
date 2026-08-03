@@ -32,12 +32,11 @@
   },
   "keywords": ["tabstack", "eve", "vercel", "tools", "agent", "web-scraping", "extraction"],
   "dependencies": {
-    "@tabstack/sdk": "^2.6.1",
-    "zod-to-json-schema": "^3.24.0"
+    "@tabstack/sdk": "^2.6.1"
   },
   "peerDependencies": {
     "eve": ">=0.24.0",
-    "zod": "^3.23.8 || ^4.0.0"
+    "zod": "^4.0.0"
   },
   "devDependencies": {
     "@tabstack/integrations-core": "workspace:*",
@@ -45,7 +44,6 @@
     "tsup": "^8.3.5",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8",
-    "zod": "^3.23.8",
-    "zod4": "npm:zod@^4.0.0"
+    "zod": "^4.0.0"
   }
 }

@@ -76,12 +76,9 @@ Load it with `pi -e ./tabstack.ts`, or drop the file into `~/.pi/agent/extension
   from it; the `ToolResult` content shape is a plain object literal).
 - `@tabstack/sdk` is a direct dependency.
 - `@tabstack/integrations-core` is a dev dependency, bundled via tsup `noExternal`.
-- `vitest.config.ts` aliases `zod` to this package's single Zod 4 instance. Reason: the built package
-  inlines core (so core's schemas are constructed with this adapter's Zod 4), but tests import core's
-  dist, which otherwise resolves core's own in-repo Zod 3 (this branch is based on `main`). Two Zod
-  majors do not interoperate (`z.toJSONSchema` throws on a Zod 3 schema), so the alias dedupes them to
-  Zod 4, matching the bundle. **Removable once core is Zod 4 (PR #12):** at that point core's dist
-  already resolves Zod 4 and the alias is a no-op.
+- No `vitest.config.ts` zod alias is needed: the whole repo is Zod 4 only, so core's dist resolves the
+  same single Zod 4 instance the bundle is built against. Do not reintroduce a second Zod major
+  anywhere in the workspace: `z.toJSONSchema` throws on a schema built by a different Zod instance.
 - Names/descriptions/schemas come from core. Do not redefine them here (labels are the one bit of
   UI-only text that lives here, in the `LABELS` map).
 - When core adds a tool, add a `LABELS` entry, an entry in `buildToolDefs`, the tool name to the
