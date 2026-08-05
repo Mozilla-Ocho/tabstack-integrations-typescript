@@ -84,6 +84,27 @@ publish and at what version:
 | `pi-vX.Y.Z`        | `@tabstack/pi-agent` at `X.Y.Z`      |
 | `vX.Y.Z`           | all adapters at `X.Y.Z`              |
 
+### The release helper
+
+`scripts/release.mjs` wraps this flow with the checks that catch a bad artifact
+before and after it ships. Node builtins only; needs `git`, `gh`, `pnpm`, `npm`.
+
+```bash
+pnpm release list                    # every package: checked-in vs published
+pnpm release preflight pi            # is this safe to release?
+pnpm release release pi 0.1.1        # preflight, tag, watch the run, verify npm
+pnpm release verify pi 0.1.0         # is a published version installable?
+pnpm release publish-local claude 0.1.0   # brand-new names only, prompts for OTP
+```
+
+`preflight` and `verify` both pack the package, read the manifest back out of the
+tarball, and assert every path it advertises through `main`, `module`, `types`
+and `exports` is present — then install the tarball into a scratch project and
+import it. `pnpm release verify pi 0.1.0` fails today, which is the bug this
+exists to prevent.
+
+Useful flags: `--dry-run`, `--yes`, `--skip-tests`, `--any-branch`.
+
 To cut a release:
 
 1. Create a **GitHub Release** with a tag in one of the forms above (e.g.
