@@ -14,7 +14,8 @@ name: Release
 # The tag's version is written into the target package.json(s) at build time
 # (not committed back); the GitHub Release is the source of truth. Publishing
 # uses npm OIDC trusted publishing (no NPM_TOKEN), configured per package on
-# npmjs.com, with provenance (each package's publishConfig sets provenance:true).
+# npmjs.com. Provenance is requested by the publish step via --provenance, gated
+# on repository visibility (see the note on that step).
 # Prerelease versions (e.g. 1.2.0-beta.1) publish under the `next` dist-tag.
 on:
   release:
@@ -88,8 +89,10 @@ jobs:
         uses: pnpm/action-setup@v4
 
       # No registry-url here on purpose: it would make setup-node write an
-      # .npmrc with `_authToken=${NODE_AUTH_TOKEN}`, which breaks OIDC trusted
-      # publishing (pnpm/pnpm#11513). OIDC needs no token or .npmrc auth line.
+      # .npmrc with `_authToken=${NODE_AUTH_TOKEN}`, and an unset token there can
+      # shadow the OIDC exchange. OIDC needs no token or .npmrc auth line.
+      # (pnpm/pnpm#11513 presents this way but was resolved by updating
+      # pnpm/action-setup — keep that action current if OIDC starts 404ing.)
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -115,13 +118,32 @@ jobs:
         run: pnpm build
 
       # pnpm publish rewrites `workspace:*` deps to real versions and does OIDC
-      # trusted publishing natively. --access/--provenance come from each
-      # package's publishConfig. --no-git-checks: the tree carries the in-place
-      # version bump and we're on a detached tag.
+      # trusted publishing natively. --access comes from each package's
+      # publishConfig. --no-git-checks: the tree carries the in-place version
+      # bump and we're on a detached tag.
+      #
+      # Provenance is a flag rather than a publishConfig key because npm dropped
+      # support for attestations from private source repositories in July 2023,
+      # and an explicit request is a hard publish failure there rather than a
+      # graceful skip. Gating on the release event's visibility means flipping
+      # this repo public turns attestations on with no edit here.
       - name: Publish to npm
+        env:
+          REPO_PRIVATE: ${{ github.event.repository.private }}
         run: |
           set -euo pipefail
+
+          # Seeded with the always-on flags so the array is never empty: under
+          # `set -u`, expanding an empty array aborts on bash < 4.4.
+          ARGS=(--no-git-checks --tag "${{ steps.tag.outputs.npm_tag }}")
+          if [[ "$REPO_PRIVATE" == "false" ]]; then
+            ARGS+=(--provenance)
+            echo "Public repository: publishing with provenance attestations."
+          else
+            echo "::warning::Private source repository — publishing without provenance. Make the repo public to get attestations."
+          fi
+
           for PKG in ${{ steps.tag.outputs.pkgs }}; do
             echo "Publishing $PKG"
-            pnpm --filter "$PKG" publish --no-git-checks --tag "${{ steps.tag.outputs.npm_tag }}"
+            pnpm --filter "$PKG" publish "${ARGS[@]}"
           done
