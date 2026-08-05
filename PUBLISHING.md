@@ -94,6 +94,7 @@ pnpm release list                    # every package: checked-in vs published
 pnpm release preflight pi            # is this safe to release?
 pnpm release release pi 0.1.1        # preflight, tag, watch the run, verify npm
 pnpm release verify pi 0.1.0         # is a published version installable?
+pnpm release check-artifact pi       # does the built tarball ship what it declares?
 pnpm release publish-local claude 0.1.0   # brand-new names only, prompts for OTP
 ```
 
@@ -102,6 +103,15 @@ tarball, and assert every path it advertises through `main`, `module`, `types`
 and `exports` is present — then install the tarball into a scratch project and
 import it. `pnpm release verify pi 0.1.0` fails today, which is the bug this
 exists to prevent.
+
+`check-artifact` is just the tarball assertion — no git, `gh`, network or build,
+so it runs anywhere. `release.yml` runs it for each target package between
+building and publishing, which is what makes a distless publish impossible
+rather than merely detectable: `prepublishOnly` rebuilds but asserts nothing.
+
+`verify` with no version resolves the `latest` dist-tag rather than the
+last-published version, since a patch on an older line publishes last without
+being the newest.
 
 Useful flags: `--dry-run`, `--yes`, `--skip-tests`, `--any-branch`.
 
@@ -148,4 +158,10 @@ Version numbers live in the release tags, not committed back to `package.json`
   out with only `package.json` and `README.md`, so it installed cleanly and then
   failed at first import with `ERR_MODULE_NOT_FOUND`. All eight publishable
   packages now run `prepublishOnly: pnpm -w run build`, which makes a distless
-  publish impossible from CI or a laptop.
+  publish impossible from CI or a laptop. `release.yml` also asserts the packed
+  tarball against its own manifest before publishing, so a build that succeeds
+  while emitting nothing fails the run instead of reaching npm.
+- `publish-local` restores `package.json` on the way out, including on Ctrl-C.
+  A bare `try`/`finally` would not: Node's default `SIGINT` handler terminates
+  without unwinding, so the restore is also wired to `SIGINT`/`SIGTERM`, which
+  re-raise afterwards to keep the 130 exit status.
