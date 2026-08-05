@@ -248,8 +248,16 @@ function checkGitState({ requireBranch = true } = {}) {
 
   run("git", ["fetch", "origin", "--quiet", "--tags"], { quiet: true });
   const local = capture("git", ["rev-parse", "HEAD"]);
-  const remote = capture("git", ["rev-parse", `origin/${branch}`], { allowFail: true });
-  if (remote && local !== remote) {
+  // --verify --quiet so a missing ref yields an empty string. Plain `rev-parse`
+  // echoes the unresolved name back on stdout and would read as a real sha.
+  const remote = capture("git", ["rev-parse", "--verify", "--quiet", `origin/${branch}`], {
+    allowFail: true,
+  });
+  if (!remote) {
+    warn(`origin/${branch} does not exist — nothing to compare against`);
+    return;
+  }
+  if (local !== remote) {
     const ahead = capture("git", ["rev-list", "--count", `origin/${branch}..HEAD`]);
     const behind = capture("git", ["rev-list", "--count", `HEAD..origin/${branch}`]);
     fail(
