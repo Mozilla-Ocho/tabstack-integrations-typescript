@@ -117,6 +117,20 @@ jobs:
       - name: Build
         run: pnpm build
 
+      # The artifact assertion, run where it cannot be skipped. Packs each target
+      # exactly as publish would, reads the manifest back out of the tarball and
+      # asserts every path it advertises through main/module/types/exports is
+      # inside. `prepublishOnly` rebuilds but asserts nothing, so without this a
+      # build that silently emits no dist/ still publishes — that is exactly how
+      # @tabstack/pi-agent@0.1.0 shipped. `pnpm pack` does not run
+      # `prepublishOnly`, so this checks what the build step above produced.
+      - name: Assert built artifacts
+        run: |
+          set -euo pipefail
+          for PKG in ${{ steps.tag.outputs.pkgs }}; do
+            node scripts/release.mjs check-artifact "$PKG"
+          done
+
       # pnpm publish rewrites `workspace:*` deps to real versions and does OIDC
       # trusted publishing natively. --access comes from each package's
       # publishConfig. --no-git-checks: the tree carries the in-place version
