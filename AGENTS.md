@@ -18,6 +18,7 @@ packages/
   claude-agent/  @tabstack/claude-agent        Claude Agent SDK adapter (in-process MCP server).
   openai-agents/ @tabstack/openai-agents       OpenAI Agents SDK adapter.
   llamaindex/    @tabstack/llamaindex          LlamaIndex.TS adapter.
+  pi-agent/      @tabstack/pi-agent            Pi coding agent extension.
 ```
 
 ## Why it is structured this way
@@ -70,6 +71,12 @@ install is a harmless warning; esbuild and biome get their binaries from optiona
 
 - `zod` and the framework (`@langchain/core`, `ai`) are **peer dependencies** in the adapters, so the
   consumer's single instance is shared. Never make them direct dependencies.
+- **The whole repo is Zod 4 only.** `core`, every adapter, and every app in `apps/` declare
+  `zod: ^4.0.0`. Reasons: the Claude Agent and OpenAI Agents SDKs require Zod 4, the `eve` and
+  `pi-agent` adapters use Zod 4's native `z.toJSONSchema`, and core's emitted `.d.ts` is Zod 4 shaped
+  so a Zod 3 consumer cannot typecheck it. Never reintroduce a Zod 3 range anywhere, including the
+  demo apps: pnpm resolves two Zod majors silently (no peer warning), which splits the framework
+  instance and breaks schema interop.
 - The client reads `TABSTACK_API_KEY` and is constructed lazily, so importing a package never
   requires a key.
 - Adapter tools resolve the client at call time, not at module load.

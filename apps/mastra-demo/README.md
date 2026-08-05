@@ -43,5 +43,6 @@ It will call `research_question` (or the extract tools when you name a URL) and 
 
 - Swap the `model` string in `src/index.ts` for any provider Mastra's model router supports; set that
   provider's API key.
-- The demo pins `zod@^3`, but `@tabstack/mastra` supports both Zod 3 and Zod 4, so bump it if you
-  prefer.
+- Requires Zod 4: `@tabstack/mastra` declares `zod@^4` as a peer dependency, so the demo pins
+  `zod@^4`. On `zod@^3` the app resolves a second Zod major against `@mastra/core`, and
+  `new Agent({ tools: tabstackTools })` then fails with TS2589 (type instantiation excessively deep).

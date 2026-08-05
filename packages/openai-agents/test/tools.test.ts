@@ -73,7 +73,7 @@ describe("@tabstack/openai-agents", () => {
       JSON.stringify({ url: "https://example.com" }),
     );
     expect(result).toBe("# Hello");
-    expect(client.extract.markdown).toHaveBeenCalledWith({ url: "https://example.com" });
+    expect(client.extract.markdown).toHaveBeenCalledWith({ url: "https://example.com" }, undefined);
   });
 
   it("rejects schema-violating input before touching the SDK client", async () => {

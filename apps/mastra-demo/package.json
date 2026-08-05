@@ -12,7 +12,7 @@
   "dependencies": {
     "@mastra/core": "^1.51.0",
     "@tabstack/mastra": "workspace:*",
-    "zod": "^3.25.0"
+    "zod": "^4.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

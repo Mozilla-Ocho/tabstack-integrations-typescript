@@ -86,8 +86,8 @@ API errors). eve surfaces this in the tool result.
 - The client is created lazily, so importing the package never requires an API key to be set.
 - Inputs are validated against the core Zod schema before the SDK call, so malformed model output
   fails fast with a clear error.
-- **Zod 3 and Zod 4 both work.** On Zod 4 the adapter uses the built-in `z.toJSONSchema`; on Zod 3 it
-  falls back to `zod-to-json-schema`. Your app's own Zod version is used (it's a peer dependency).
+- **Requires Zod 4.** The adapter converts the core schema to JSON Schema with Zod 4's built-in
+  `z.toJSONSchema`. `zod` is a peer dependency, so your app's own Zod 4 instance is used.
 
 ## Links
 

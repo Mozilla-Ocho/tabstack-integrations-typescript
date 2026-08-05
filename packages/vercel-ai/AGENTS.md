@@ -29,8 +29,11 @@ const { text } = await generateText({ model, tools: tabstackTools, prompt });
 ## How it works internally
 
 - `createTabstackTools()` from core gives `{ name, description, schema, execute }` specs.
-- Each is wrapped with `tool({ description, inputSchema: spec.schema, execute: spec.execute })`. The
-  AI SDK v5+ API uses `inputSchema` (renamed from `parameters`); types are inferred from the schema.
+- Each is wrapped with `tool({ description, inputSchema: spec.schema, execute })`, where `execute`
+  destructures the AI SDK's `abortSignal` and forwards it to the core body as
+  `spec.execute(input, { signal: abortSignal })`, so a cancelled generation aborts the underlying
+  Tabstack request. The AI SDK v5+ API uses `inputSchema` (renamed from `parameters`); types are
+  inferred from the schema.
 - Tools are built inline per spec (not via a generic helper): the AI SDK's conditional `tool()`
   typing rejects a generic passthrough, so concrete specs are needed for inference. Keep it inline.
 - `outputSchema` is intentionally omitted; add it only where a return shape is stable and worth
@@ -38,7 +41,8 @@ const { text } = await generateText({ model, tools: tabstackTools, prompt });
 
 ## Rules specific to this package
 
-- `ai` (>=5.0.0, v6 target) and `zod` are **peer dependencies** (+ dev dependencies). Never direct.
+- `ai` (>=5.0.0, v6 target) and `zod` (^4.0.0) are **peer dependencies** (+ dev dependencies). Never
+  direct. Zod 4 only, like the rest of the repo.
 - `@tabstack/integrations-core` is a dev dependency, bundled via tsup `noExternal`.
 - Names/descriptions/schemas come from core. Do not redefine them here.
 - When core adds a tool, add an entry in `buildTools` in `src/index.ts` and a test.

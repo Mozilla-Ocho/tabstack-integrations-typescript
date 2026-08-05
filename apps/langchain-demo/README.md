@@ -39,7 +39,7 @@ With no argument it asks a default question. The agent decides which Tabstack to
 
 - The model is `anthropic:claude-sonnet-4-6`. Swap the `model` string in `src/index.ts` for any
   provider LangChain supports, install that provider package, and set its API key.
-- The demo pins `zod@^3`, but `@tabstack/langchain` supports both Zod 3 and Zod 4, so bump it if you
-  prefer.
+- Requires Zod 4: `@tabstack/langchain` declares `zod@^4` as a peer dependency, so the demo pins
+  `zod@^4`. Mixing Zod majors between the app and the adapter breaks schema interop.
 - `pnpm --filter @tabstack/langchain-demo typecheck` needs `@tabstack/langchain` built first (it
   resolves the adapter via its `dist`).

@@ -29,6 +29,10 @@ export type { TabstackClient, TabstackClientConfig } from "@tabstack/integration
  * change from the older v0 `execute({ context })` shape, so we take the first arg
  * and forward it to the core body. `outputSchema` is intentionally omitted; add
  * it only where a return shape is stable and worth enforcing.
+ *
+ * The `createTool` return type is kept as inferred (schema generic intact), so
+ * consumers get checked tool input. Do not widen it to `ToolAction<any, any>`:
+ * see the Zod note in AGENTS.md for the TS2589 this used to work around.
  */
 function toMastraTool<TInput, TOutput>(spec: TabstackToolSpec<TInput, TOutput>) {
   return createTool({
@@ -47,11 +51,11 @@ function toMastraTool<TInput, TOutput>(spec: TabstackToolSpec<TInput, TOutput>) 
  */
 function buildTools(specs: ReturnType<typeof createTabstackTools>) {
   return {
-    [specs.extractStructuredData.name]: toMastraTool(specs.extractStructuredData),
-    [specs.extractPageContent.name]: toMastraTool(specs.extractPageContent),
-    [specs.researchQuestion.name]: toMastraTool(specs.researchQuestion),
-    [specs.generateStructuredData.name]: toMastraTool(specs.generateStructuredData),
-    [specs.automateBrowserTask.name]: toMastraTool(specs.automateBrowserTask),
+    extract_structured_data: toMastraTool(specs.extractStructuredData),
+    extract_page_content: toMastraTool(specs.extractPageContent),
+    research_question: toMastraTool(specs.researchQuestion),
+    generate_structured_data: toMastraTool(specs.generateStructuredData),
+    automate_browser_task: toMastraTool(specs.automateBrowserTask),
   };
 }
 
@@ -85,14 +89,20 @@ export const generateStructuredDataTool = toMastraTool(defaultSpecs.generateStru
 export const automateBrowserTaskTool = toMastraTool(defaultSpecs.automateBrowserTask);
 
 /**
- * Tabstack tools keyed by tool name, ready to spread straight into an `Agent`'s
+ * Tabstack tools keyed by tool name, ready to pass straight to an `Agent`'s
  * `tools`. The client is resolved lazily on first tool call, so importing this
  * module never requires TABSTACK_API_KEY to be set.
+ *
+ * The type is left inferred, so the five keys and each tool's input schema stay
+ * checked for consumers.
  */
 export const tabstackTools = {
-  [defaultSpecs.extractStructuredData.name]: extractStructuredDataTool,
-  [defaultSpecs.extractPageContent.name]: extractPageContentTool,
-  [defaultSpecs.researchQuestion.name]: researchQuestionTool,
-  [defaultSpecs.generateStructuredData.name]: generateStructuredDataTool,
-  [defaultSpecs.automateBrowserTask.name]: automateBrowserTaskTool,
+  extract_structured_data: extractStructuredDataTool,
+  extract_page_content: extractPageContentTool,
+  research_question: researchQuestionTool,
+  generate_structured_data: generateStructuredDataTool,
+  automate_browser_task: automateBrowserTaskTool,
 };
+
+/** The core (snake_case) name of every Tabstack tool this adapter exposes to Mastra. */
+export type TabstackMastraToolName = keyof typeof tabstackTools;

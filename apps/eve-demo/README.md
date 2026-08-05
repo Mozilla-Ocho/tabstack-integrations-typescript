@@ -46,5 +46,5 @@ It will call `research_question` and cite what it finds.
 
 - eve requires a recent Node (its scaffold pins `node >=24`). If `eve dev` complains about the Node
   version, upgrade Node for this app.
-- The demo pins `zod@^3`, but `@tabstack/eve` supports both Zod 3 and Zod 4, so bump it if you prefer.
+- Requires Zod 4: `@tabstack/eve` uses Zod 4's native `z.toJSONSchema`, so the demo pins `zod@^4`.
 - Swap the `model` in `agent/agent.ts` for any provider eve supports; set that provider's API key.

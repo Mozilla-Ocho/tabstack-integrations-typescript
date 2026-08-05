@@ -61,8 +61,8 @@ await query({
 
 - `@anthropic-ai/claude-agent-sdk` (>=0.3.0) and `zod` are **peer dependencies** (+ dev dependencies).
   Never direct.
-- The Claude Agent SDK requires **Zod 4**, so the `zod` peer is `^4.0.0` (not the `^3 || ^4` the other
-  adapters allow). No JSON Schema conversion is needed, so there is no `zod-to-json-schema` dependency.
+- The `zod` peer is `^4.0.0`. The Claude Agent SDK requires Zod 4, and the whole repo is Zod 4 only.
+  No JSON Schema conversion is needed, so there is no `zod-to-json-schema` dependency.
 - `@tabstack/integrations-core` is a dev dependency, bundled via tsup `noExternal`.
 - Names/descriptions/schemas come from core. Do not redefine them here.
 - When core adds a tool, add an entry in `buildTools` and a test.

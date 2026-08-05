@@ -73,10 +73,7 @@ function toOpenAIAgentsTool<TInput, TOutput>(spec: TabstackToolSpec<TInput, TOut
   return tool({
     name: spec.name,
     description: spec.description,
-    // Core types `schema` against Zod 3's `ZodType`; `z.toJSONSchema` wants Zod
-    // 4's. The SDK requires Zod 4, so at runtime the schema is a Zod 4 object;
-    // this cast is a type-only bridge across core's declared (Zod 3) type.
-    parameters: toJsonParameters(spec.schema as unknown as z.ZodType),
+    parameters: toJsonParameters(spec.schema),
     strict: false,
     async execute(input) {
       let parsed: TInput;

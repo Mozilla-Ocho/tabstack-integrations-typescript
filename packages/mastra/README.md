@@ -21,7 +21,8 @@ npm install @tabstack/mastra @mastra/core zod
 ```
 
 `@mastra/core` (v1 or later) and `zod` are peer dependencies, so your app's single instance of each
-is shared. Set your API key (get one at [console.tabstack.ai](https://console.tabstack.ai)):
+is shared. **Zod 4 is required**: on Zod 3 your app and this adapter resolve two Zod majors against
+`@mastra/core`, and `new Agent({ tools })` then fails to typecheck with TS2589. Set your API key (get one at [console.tabstack.ai](https://console.tabstack.ai)):
 
 ```bash
 export TABSTACK_API_KEY="your-key-here"
