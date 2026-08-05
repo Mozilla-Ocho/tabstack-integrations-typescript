@@ -12,6 +12,7 @@
 //   node scripts/release.mjs release <pkg> <version> [--notes <text>]
 //   node scripts/release.mjs publish-local <pkg> <version> [--otp <code>]
 //   node scripts/release.mjs verify <pkg> [version]
+//   node scripts/release.mjs check-artifact <pkg>
 //
 // Node builtins only, so it runs from a bare checkout with nothing installed.
 // Requires git, gh, pnpm and npm on PATH.
@@ -134,13 +135,49 @@ function withTempDir(fn) {
   }
 }
 
+// Puts `path` back when fn returns, throws, or the process is interrupted.
+// A bare try/finally is not enough: Node's default SIGINT handler terminates
+// without unwinding, so Ctrl-C mid-publish would leave the version bump behind
+// in the working tree.
+function withRestoredFile(path, fn) {
+  const original = readFileSync(path, "utf8");
+  let restored = false;
+  const restore = () => {
+    if (restored) return;
+    restored = true;
+    writeFileSync(path, original);
+    info(`restored ${path.replace(`${ROOT}/`, "")}`);
+  };
+  const onSignal = (signal) => {
+    restore();
+    // Re-raise with our handler removed so the default action applies and the
+    // exit status still reflects the signal (130 for SIGINT) rather than 0.
+    process.removeListener(signal, onSignal);
+    process.kill(process.pid, signal);
+  };
+  process.on("SIGINT", onSignal);
+  process.on("SIGTERM", onSignal);
+  try {
+    return fn();
+  } finally {
+    restore();
+    process.removeListener("SIGINT", onSignal);
+    process.removeListener("SIGTERM", onSignal);
+  }
+}
+
 // ---------------------------------------------------------------- package helpers
 
-function resolvePackage(prefix) {
-  if (!prefix) fail(`Missing package. One of: ${Object.keys(PACKAGES).join(", ")}`);
+function resolvePackage(target) {
+  if (!target) fail(`Missing package. One of: ${Object.keys(PACKAGES).join(", ")}`);
+  // Humans pass a tag prefix ('pi'); release.yml passes an npm name, since that
+  // is what its tag-parsing step already resolved the tag to.
+  const prefix = PACKAGES[target]
+    ? target
+    : Object.keys(PACKAGES).find((key) => PACKAGES[key].npm === target);
   const entry = PACKAGES[prefix];
   if (!entry) {
-    fail(`Unknown package '${prefix}'. One of: ${Object.keys(PACKAGES).join(", ")}`);
+    fail(`Unknown package '${target}'. One of: ${Object.keys(PACKAGES).join(", ")}`);
   }
   return { prefix, ...entry, path: join(ROOT, "packages", entry.dir) };
 }
@@ -185,7 +222,14 @@ const onlyTarball = (dir) => {
   return join(dir, found[0]);
 };
 
-const publishedVersions = (name) => captureJson("npm", ["view", name, "versions", "--json"]) ?? [];
+// The `versions` array is registry insertion order, i.e. publish order — a patch
+// on an older line publishes last without being the newest version. So the
+// `latest` dist-tag is reported instead: it is what `npm install <name>`
+// actually resolves to. Both come back from one request.
+function publishedInfo(name) {
+  const view = captureJson("npm", ["view", name, "versions", "dist-tags", "--json"]);
+  return { versions: view?.versions ?? [], latest: view?.["dist-tags"]?.latest ?? null };
+}
 
 function distInfo(spec) {
   return captureJson("npm", ["view", spec, "dist", "--json"]);
@@ -353,14 +397,15 @@ function checkImport(pkg, tarball) {
 
 function reportVersions(pkg) {
   const local = readManifest(pkg).version;
-  const versions = publishedVersions(pkg.npm);
-  const latest = versions.at(-1);
+  const { versions, latest } = publishedInfo(pkg.npm);
   step("Versions");
   info(`checked in: ${local} ${dim("(lags by design — tags are the source of truth)")}`);
   if (!versions.length) {
     warn(`${pkg.npm} is not on npm yet — the first version needs 'publish-local'`);
-  } else {
+  } else if (latest) {
     info(`on npm:     ${latest}   ${dim(`(${versions.length} version(s) published)`)}`);
+  } else {
+    warn(`${pkg.npm} has ${versions.length} version(s) but no 'latest' dist-tag`);
   }
   return { local, versions, latest };
 }
@@ -371,12 +416,12 @@ async function cmdList() {
   step("Packages");
   const rows = Object.entries(PACKAGES).map(([prefix, entry]) => {
     const pkg = { ...entry, path: join(ROOT, "packages", entry.dir) };
-    const versions = publishedVersions(entry.npm);
+    const { versions, latest } = publishedInfo(entry.npm);
     return {
       tag: `${prefix}-vX.Y.Z`,
       npm: entry.npm,
       checkedIn: readManifest(pkg).version,
-      published: versions.at(-1) ?? "—",
+      published: latest ?? "—",
       count: versions.length,
     };
   });
@@ -421,6 +466,21 @@ async function cmdPreflight(prefix, flags) {
     info(`suggested next: ${pkg.prefix}-v${maj}.${min}.${Number(patch) + 1}`);
   }
   console.log(`\n${green("Ready to release.")} ${dim(`${versions.length} version(s) on npm.`)}`);
+}
+
+// Pack and assert, nothing else — no git, gh, network or build. This is the one
+// command release.yml calls, between building and publishing: `prepublishOnly`
+// rebuilds but asserts nothing, so without this a build that produces no dist/
+// still reaches npm. `pnpm pack` does not run `prepublishOnly`, so what gets
+// asserted is what the workflow's build step actually produced.
+async function cmdCheckArtifact(target) {
+  const pkg = resolvePackage(target);
+  console.log(bold(`\nCheck artifact ${pkg.npm}@${readManifest(pkg).version}`));
+  withTempDir((dir) => {
+    run("pnpm", ["pack", "--pack-destination", dir], { cwd: pkg.path, quiet: true });
+    checkTarball(pkg, onlyTarball(dir), { label: "packed tarball" });
+  });
+  console.log(`\n${green("Artifact declares nothing it does not ship.")}`);
 }
 
 async function cmdRelease(prefix, version, flags) {
@@ -558,9 +618,7 @@ async function cmdPublishLocal(prefix, version, flags) {
   const otp = flags.otp || (await prompt("npm one-time password:"));
   if (!/^\d{6}$/.test(otp)) fail("Expected a 6-digit OTP");
 
-  const manifestPath = join(pkg.path, "package.json");
-  const original = readFileSync(manifestPath, "utf8");
-  try {
+  withRestoredFile(join(pkg.path, "package.json"), () => {
     step("Publishing");
     run("npm", ["pkg", "set", `version=${version}`], { cwd: pkg.path, quiet: true });
     // Pre-dating the provenance change, the manifest may still carry
@@ -574,10 +632,7 @@ async function cmdPublishLocal(prefix, version, flags) {
     // real version, which npm publish would ship literally.
     run("pnpm", ["publish", "--no-git-checks", `--otp=${otp}`], { cwd: pkg.path });
     ok(`published ${pkg.npm}@${version}`);
-  } finally {
-    writeFileSync(manifestPath, original);
-    info("restored package.json");
-  }
+  });
 
   await verifyPublished(pkg, version);
 }
@@ -608,9 +663,18 @@ async function verifyPublished(pkg, version) {
 
 async function cmdVerify(prefix, version) {
   const pkg = resolvePackage(prefix);
-  const resolved = version ?? publishedVersions(pkg.npm).at(-1);
-  if (!resolved) fail(`${pkg.npm} has no published versions`);
   if (version && !SEMVER.test(version)) fail(`'${version}' is not a valid semver version`);
+  let resolved = version;
+  if (!resolved) {
+    const { versions, latest } = publishedInfo(pkg.npm);
+    if (!versions.length) fail(`${pkg.npm} has no published versions`);
+    // Guessing a version here would be verifying an arbitrary artifact and
+    // reporting it as the current one, so make the caller name it.
+    if (!latest) {
+      fail(`${pkg.npm} has no 'latest' dist-tag — name a version explicitly`);
+    }
+    resolved = latest;
+  }
   console.log(bold(`\nVerify ${pkg.npm}@${resolved}`));
   checkRegistry();
   await verifyPublished(pkg, resolved);
@@ -639,7 +703,11 @@ ${bold("Release helper")} — GitHub Release tags drive publishing; this wraps t
 
   ${cyan("node scripts/release.mjs verify <pkg> [version]")}
       Pull a published version back off npm and check it is actually installable.
-      Defaults to the latest published version.
+      Defaults to the ${bold("latest")} dist-tag.
+
+  ${cyan("node scripts/release.mjs check-artifact <pkg>")}
+      Pack and assert the tarball ships every entry point its manifest declares.
+      No git, gh or network; ${WORKFLOW} runs this before publishing.
 
   ${bold("Packages")}  ${Object.keys(PACKAGES).join(", ")}
 
@@ -709,6 +777,8 @@ async function main() {
       return cmdPublishLocal(rest[0], rest[1], flags);
     case "verify":
       return cmdVerify(rest[0], rest[1]);
+    case "check-artifact":
+      return cmdCheckArtifact(rest[0]);
     default:
       fail(`Unknown command '${command}'. Run with --help.`);
   }
