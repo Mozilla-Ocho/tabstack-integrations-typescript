@@ -16,6 +16,7 @@ npm first.
 | `packages/claude-agent` | `@tabstack/claude-agent` | `claude` |
 | `packages/openai-agents` | `@tabstack/openai-agents` | `openai` |
 | `packages/llamaindex` | `@tabstack/llamaindex` | `llama` |
+| `packages/pi-agent` | `@tabstack/pi-agent` | `pi` |
 | `packages/core` | `@tabstack/integrations-core` | **not published** (`private: true`; bundled into the adapters) |
 
 ## One-time: register the trusted publisher (per published package)
@@ -38,23 +39,22 @@ npm only exposes Trusted Publisher settings on a package that **already exists**
 with no pre-registration for brand-new names. So the first version of a new
 package must be published once by hand, from a maintainer's machine.
 
-Two things get in the way locally:
+One thing gets in the way locally: the npm account has 2FA set to
+`auth-and-writes`, so each publish needs a fresh `--otp`.
 
-- `publishConfig.provenance: true` makes npm refuse to publish outside a
-  supported CI provider, and `publishConfig` is merged *over* CLI flags, so
-  `--provenance=false` does not override it. The key has to come out of the
-  manifest for that one publish.
-- The npm account has 2FA set to `auth-and-writes`, so each publish needs a
-  fresh `--otp`.
+Provenance is no longer a problem here. It used to live in each manifest as
+`publishConfig.provenance: true`, which made npm refuse to publish outside a
+supported CI provider — and because `publishConfig` is merged *over* CLI flags,
+`--provenance=false` could not override it, so the key had to be deleted for
+that one publish. Provenance is now requested by `release.yml` via
+`--provenance` instead, so a local publish simply omits it.
 
 ```bash
 # from the repo root, on a clean tree, authenticated as a maintainer
 pnpm install --frozen-lockfile --filter "./packages/*..."
 pnpm build
 
-npm pkg delete publishConfig.provenance --prefix packages/<dir>
 pnpm --filter @tabstack/<name> publish --no-git-checks --otp=<code>
-git checkout packages/<dir>/package.json
 ```
 
 Use `pnpm publish` rather than `npm publish`: it rewrites the
@@ -81,6 +81,7 @@ publish and at what version:
 | `claude-vX.Y.Z`    | `@tabstack/claude-agent` at `X.Y.Z`  |
 | `openai-vX.Y.Z`    | `@tabstack/openai-agents` at `X.Y.Z` |
 | `llama-vX.Y.Z`     | `@tabstack/llamaindex` at `X.Y.Z`    |
+| `pi-vX.Y.Z`        | `@tabstack/pi-agent` at `X.Y.Z`      |
 | `vX.Y.Z`           | all adapters at `X.Y.Z`              |
 
 To cut a release:
@@ -99,8 +100,13 @@ Version numbers live in the release tags, not committed back to `package.json`
 
 ## Notes
 
-- Provenance is attached automatically: each published `package.json` sets
-  `publishConfig.provenance: true` and carries a `repository` field. It is
+- Provenance is requested by `release.yml`'s publish step via `--provenance`,
+  gated on the repository being public. npm dropped support for attestations
+  from private source repositories in July 2023, and an explicitly requested
+  provenance is a hard publish failure there rather than a graceful skip, so
+  while this repo is private the workflow publishes without it and logs a
+  warning. Making the repo public turns attestations on with no further edit.
+  Each published `package.json` still carries a `repository` field, which is
   verified against `Mozilla-Ocho/tabstack-integrations-typescript`, so the repo
   owner/name must match.
 - `pnpm publish` performs the OIDC token exchange itself (pnpm ≥ 10.16), then
@@ -113,5 +119,12 @@ Version numbers live in the release tags, not committed back to `package.json`
   so far was hand-published, so none carry provenance. The first real GitHub
   Release is also the first live test of `release.yml`.
 - The release job deliberately omits `registry-url` from `setup-node`. Setting
-  it writes an `.npmrc` with `_authToken=${NODE_AUTH_TOKEN}`, which breaks OIDC
-  trusted publishing (pnpm/pnpm#11513).
+  it writes an `.npmrc` with `_authToken=${NODE_AUTH_TOKEN}`, and an unset token
+  there can shadow the OIDC exchange. Note that pnpm/pnpm#11513, often cited for
+  this, was actually resolved by updating `pnpm/action-setup` — so if OIDC starts
+  returning 404, bump that action before suspecting `registry-url`.
+- Every published tarball must contain `dist/`. `@tabstack/pi-agent@0.1.0` went
+  out with only `package.json` and `README.md`, so it installed cleanly and then
+  failed at first import with `ERR_MODULE_NOT_FOUND`. All eight publishable
+  packages now run `prepublishOnly: pnpm -w run build`, which makes a distless
+  publish impossible from CI or a laptop.
