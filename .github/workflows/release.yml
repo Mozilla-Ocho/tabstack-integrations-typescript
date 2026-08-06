@@ -92,7 +92,7 @@ jobs:
       # .npmrc with `_authToken=${NODE_AUTH_TOKEN}`, and an unset token there can
       # shadow the OIDC exchange. OIDC needs no token or .npmrc auth line.
       # (pnpm/pnpm#11513 presents this way but was resolved by updating
-      # pnpm/action-setup — keep that action current if OIDC starts 404ing.)
+      # pnpm/action-setup, so keep that action current if OIDC starts 404ing.)
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -117,6 +117,20 @@ jobs:
       - name: Build
         run: pnpm build
 
+      # The artifact assertion, run where it cannot be skipped. Packs each target
+      # exactly as publish would, reads the manifest back out of the tarball and
+      # asserts every path it advertises through main/module/types/exports is
+      # inside. `prepublishOnly` rebuilds but asserts nothing, so without this a
+      # build that silently emits no dist/ still publishes, which is exactly how
+      # @tabstack/pi-agent@0.1.0 shipped. `pnpm pack` does not run
+      # `prepublishOnly`, so this checks what the build step above produced.
+      - name: Assert built artifacts
+        run: |
+          set -euo pipefail
+          for PKG in ${{ steps.tag.outputs.pkgs }}; do
+            node scripts/release.mjs check-artifact "$PKG"
+          done
+
       # pnpm publish rewrites `workspace:*` deps to real versions and does OIDC
       # trusted publishing natively. --access comes from each package's
       # publishConfig. --no-git-checks: the tree carries the in-place version
@@ -140,7 +154,7 @@ jobs:
             ARGS+=(--provenance)
             echo "Public repository: publishing with provenance attestations."
           else
-            echo "::warning::Private source repository — publishing without provenance. Make the repo public to get attestations."
+            echo "::warning::Private source repository, publishing without provenance. Make the repo public to get attestations."
           fi
 
           for PKG in ${{ steps.tag.outputs.pkgs }}; do
