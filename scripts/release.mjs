@@ -3,7 +3,7 @@
 //
 // Releases are driven by GitHub Release tags (see PUBLISHING.md); this script
 // wraps that flow with the checks that would have caught @tabstack/pi-agent@0.1.0
-// shipping without its dist/. Version numbers stay in the tags — nothing here
+// shipping without its dist/. Version numbers stay in the tags: nothing here
 // ever commits a version bump, so the checked-in package.json versions lag the
 // published ones by design.
 //
@@ -40,6 +40,9 @@ const PACKAGES = {
 const RELEASE_BRANCH = "main";
 const WORKFLOW = "release.yml";
 const SEMVER = /^\d+\.\d+\.\d+([-+].+)?$/;
+// Placeholder in the `list` table for a package with nothing on npm yet, and
+// the sentinel the drift comparison skips over.
+const UNPUBLISHED = "-";
 
 // ---------------------------------------------------------------- output
 
@@ -222,7 +225,7 @@ const onlyTarball = (dir) => {
   return join(dir, found[0]);
 };
 
-// The `versions` array is registry insertion order, i.e. publish order — a patch
+// The `versions` array is registry insertion order, i.e. publish order, so a patch
 // on an older line publishes last without being the newest version. So the
 // `latest` dist-tag is reported instead: it is what `npm install <name>`
 // actually resolves to. Both come back from one request.
@@ -257,7 +260,7 @@ function checkTools() {
 }
 
 // Guards against this script's PACKAGES map drifting from the workflow or the
-// filesystem — pi's tag prefix was added to release.yml in its own commit, so
+// filesystem. pi's tag prefix was added to release.yml in its own commit, so
 // this is a real failure mode rather than a hypothetical one.
 function checkRegistry() {
   step("Package registry");
@@ -272,7 +275,7 @@ function checkRegistry() {
     if (manifest.private) fail(`${entry.npm} is marked private but listed as publishable`);
     // Anchored so that e.g. 'ai' is not satisfied by the 'openai)' case arm.
     if (!new RegExp(`^\\s*${prefix}\\)`, "m").test(workflow) || !workflow.includes(entry.npm)) {
-      fail(`${WORKFLOW} has no '${prefix}' case for ${entry.npm} — tag prefixes have drifted`);
+      fail(`${WORKFLOW} has no '${prefix}' case for ${entry.npm}: tag prefixes have drifted`);
     }
   }
   ok(`${Object.keys(PACKAGES).length} packages match ${WORKFLOW} and the filesystem`);
@@ -298,7 +301,7 @@ function checkGitState({ requireBranch = true } = {}) {
     allowFail: true,
   });
   if (!remote) {
-    warn(`origin/${branch} does not exist — nothing to compare against`);
+    warn(`origin/${branch} does not exist, nothing to compare against`);
     return;
   }
   if (local !== remote) {
@@ -399,9 +402,9 @@ function reportVersions(pkg) {
   const local = readManifest(pkg).version;
   const { versions, latest } = publishedInfo(pkg.npm);
   step("Versions");
-  info(`checked in: ${local} ${dim("(lags by design — tags are the source of truth)")}`);
+  info(`checked in: ${local} ${dim("(lags by design, tags are the source of truth)")}`);
   if (!versions.length) {
-    warn(`${pkg.npm} is not on npm yet — the first version needs 'publish-local'`);
+    warn(`${pkg.npm} is not on npm yet, the first version needs 'publish-local'`);
   } else if (latest) {
     info(`on npm:     ${latest}   ${dim(`(${versions.length} version(s) published)`)}`);
   } else {
@@ -421,7 +424,7 @@ async function cmdList() {
       tag: `${prefix}-vX.Y.Z`,
       npm: entry.npm,
       checkedIn: readManifest(pkg).version,
-      published: latest ?? "—",
+      published: latest ?? UNPUBLISHED,
       count: versions.length,
     };
   });
@@ -431,7 +434,7 @@ async function cmdList() {
     `  ${bold("npm".padEnd(w.npm))}  ${bold("tag".padEnd(w.tag))}  ${bold("git".padEnd(w.checkedIn))}  ${bold("npm latest")}`,
   );
   for (const r of rows) {
-    const drift = r.published !== "—" && r.published !== r.checkedIn;
+    const drift = r.published !== UNPUBLISHED && r.published !== r.checkedIn;
     console.log(
       `  ${r.npm.padEnd(w.npm)}  ${dim(r.tag.padEnd(w.tag))}  ${r.checkedIn.padEnd(w.checkedIn)}  ` +
         `${drift ? cyan(r.published) : r.published}${r.count ? dim(`  (${r.count})`) : ""}`,
@@ -468,7 +471,7 @@ async function cmdPreflight(prefix, flags) {
   console.log(`\n${green("Ready to release.")} ${dim(`${versions.length} version(s) on npm.`)}`);
 }
 
-// Pack and assert, nothing else — no git, gh, network or build. This is the one
+// Pack and assert, nothing else: no git, gh, network or build. This is the one
 // command release.yml calls, between building and publishing: `prepublishOnly`
 // rebuilds but asserts nothing, so without this a build that produces no dist/
 // still reaches npm. `pnpm pack` does not run `prepublishOnly`, so what gets
@@ -509,7 +512,11 @@ async function cmdRelease(prefix, version, flags) {
   if (existing) fail(`A GitHub Release for ${tag} already exists`);
   ok("no existing GitHub Release");
 
-  const args = ["release", "create", tag, "--title", `${pkg.npm} ${version}`];
+  // Without --target, gh cuts the tag at the remote default branch's HEAD, not
+  // at the commit the preflight just built, tested and packed. With
+  // --any-branch that is a different tree entirely.
+  const head = capture("git", ["rev-parse", "HEAD"]);
+  const args = ["release", "create", tag, "--target", head, "--title", `${pkg.npm} ${version}`];
   if (flags.notes) args.push("--notes", flags.notes);
   else if (flags.notesFile) args.push("--notes-file", flags.notesFile);
   else args.push("--generate-notes");
@@ -578,6 +585,7 @@ async function cmdPublishLocal(prefix, version, flags) {
   const pkg = resolvePackage(prefix);
   if (!version) fail("Missing version. Usage: publish-local <pkg> <version>");
   if (!SEMVER.test(version)) fail(`'${version}' is not a valid semver version`);
+  const distTag = version.includes("-") ? "next" : "latest";
 
   console.log(bold(`\nHand-publish ${pkg.npm}@${version}`));
   console.log(
@@ -594,7 +602,7 @@ async function cmdPublishLocal(prefix, version, flags) {
   if (versions.length) {
     warn(
       [
-        `${pkg.npm} already has ${versions.length} version(s) on npm —`,
+        `${pkg.npm} already has ${versions.length} version(s) on npm:`,
         "a trusted publisher can probably be registered, making 'release' the better path",
       ].join(" "),
     );
@@ -606,7 +614,7 @@ async function cmdPublishLocal(prefix, version, flags) {
   if (flags.dryRun) {
     step("Dry run");
     info(`would set version ${version} in packages/${pkg.dir}/package.json (not committed)`);
-    info("would run: pnpm publish --no-git-checks --otp=<code>");
+    info(`would run: pnpm publish --no-git-checks --tag ${distTag} --otp=<code>`);
     info("would restore package.json afterwards");
     return;
   }
@@ -630,8 +638,12 @@ async function cmdPublishLocal(prefix, version, flags) {
     }
     // pnpm rather than npm: it rewrites the workspace:* core devDependency to a
     // real version, which npm publish would ship literally.
-    run("pnpm", ["publish", "--no-git-checks", `--otp=${otp}`], { cwd: pkg.path });
-    ok(`published ${pkg.npm}@${version}`);
+    // npm publish defaults to the latest dist-tag whatever the version is, so a
+    // prerelease has to say otherwise or it becomes what plain installs resolve.
+    run("pnpm", ["publish", "--no-git-checks", "--tag", distTag, `--otp=${otp}`], {
+      cwd: pkg.path,
+    });
+    ok(`published ${pkg.npm}@${version} under dist-tag '${distTag}'`);
   });
 
   await verifyPublished(pkg, version);
@@ -658,7 +670,7 @@ async function verifyPublished(pkg, version) {
   });
 
   if (dist.attestations) ok("provenance attestation present");
-  else warn("no provenance attestation — expected while the source repo is private");
+  else warn("no provenance attestation, expected while the source repo is private");
 }
 
 async function cmdVerify(prefix, version) {
@@ -671,7 +683,7 @@ async function cmdVerify(prefix, version) {
     // Guessing a version here would be verifying an arbitrary artifact and
     // reporting it as the current one, so make the caller name it.
     if (!latest) {
-      fail(`${pkg.npm} has no 'latest' dist-tag — name a version explicitly`);
+      fail(`${pkg.npm} has no 'latest' dist-tag, name a version explicitly`);
     }
     resolved = latest;
   }
@@ -684,7 +696,7 @@ async function cmdVerify(prefix, version) {
 // ---------------------------------------------------------------- cli
 
 const USAGE = `
-${bold("Release helper")} — GitHub Release tags drive publishing; this wraps them in checks.
+${bold("Release helper")}: GitHub Release tags drive publishing; this wraps them in checks.
 
   ${cyan("node scripts/release.mjs list")}
       Every package with its checked-in version and what is on npm.

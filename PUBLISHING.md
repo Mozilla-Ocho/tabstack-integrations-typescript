@@ -44,7 +44,7 @@ One thing gets in the way locally: the npm account has 2FA set to
 
 Provenance is no longer a problem here. It used to live in each manifest as
 `publishConfig.provenance: true`, which made npm refuse to publish outside a
-supported CI provider — and because `publishConfig` is merged *over* CLI flags,
+supported CI provider, and because `publishConfig` is merged *over* CLI flags,
 `--provenance=false` could not override it, so the key had to be deleted for
 that one publish. Provenance is now requested by `release.yml` via
 `--provenance` instead, so a local publish simply omits it.
@@ -100,11 +100,11 @@ pnpm release publish-local claude 0.1.0   # brand-new names only, prompts for OT
 
 `preflight` and `verify` both pack the package, read the manifest back out of the
 tarball, and assert every path it advertises through `main`, `module`, `types`
-and `exports` is present — then install the tarball into a scratch project and
+and `exports` is present, then install the tarball into a scratch project and
 import it. `pnpm release verify pi 0.1.0` fails today, which is the bug this
 exists to prevent.
 
-`check-artifact` is just the tarball assertion — no git, `gh`, network or build,
+`check-artifact` is just the tarball assertion: no git, `gh`, network or build,
 so it runs anywhere. `release.yml` runs it for each target package between
 building and publishing, which is what makes a distless publish impossible
 rather than merely detectable: `prepublishOnly` rebuilds but asserts nothing.
@@ -152,7 +152,7 @@ Version numbers live in the release tags, not committed back to `package.json`
 - The release job deliberately omits `registry-url` from `setup-node`. Setting
   it writes an `.npmrc` with `_authToken=${NODE_AUTH_TOKEN}`, and an unset token
   there can shadow the OIDC exchange. Note that pnpm/pnpm#11513, often cited for
-  this, was actually resolved by updating `pnpm/action-setup` — so if OIDC starts
+  this, was actually resolved by updating `pnpm/action-setup`, so if OIDC starts
   returning 404, bump that action before suspecting `registry-url`.
 - Every published tarball must contain `dist/`. `@tabstack/pi-agent@0.1.0` went
   out with only `package.json` and `README.md`, so it installed cleanly and then
