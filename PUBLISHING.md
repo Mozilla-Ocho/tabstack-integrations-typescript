@@ -16,6 +16,7 @@ npm first.
 | `packages/claude-agent` | `@tabstack/claude-agent` | `claude` |
 | `packages/openai-agents` | `@tabstack/openai-agents` | `openai` |
 | `packages/llamaindex` | `@tabstack/llamaindex` | `llama` |
+| `packages/pi-agent` | `@tabstack/pi-agent` | `pi` |
 | `packages/core` | `@tabstack/integrations-core` | **not published** (`private: true`; bundled into the adapters) |
 
 ## One-time: register the trusted publisher (per published package)
