@@ -11,8 +11,8 @@ the framework-agnostic tool specs from `@tabstack/integrations-core` and registe
 
 ## Why use it
 
-Drops Tabstack's web extraction, research, generation, and browser automation into the Pi agent as
-native tools, backed by the official SDK. Schema-enforced, no bespoke fetch glue.
+Gives the Pi agent finished results from the live web as native tools: cited answers, clean Markdown,
+matching JSON, and completed public web tasks, backed by the official SDK.
 
 ## How to use it (consumer)
 
@@ -27,7 +27,8 @@ export { default } from "@tabstack/pi-agent";
 // export default createTabstackPiExtension({ apiKey });
 ```
 
-Load it with `pi -e ./tabstack.ts`, or drop the file into `~/.pi/agent/extensions/*.ts` (global) or
+The simplest path is `pi install npm:@tabstack/pi-agent`, which loads the default extension through the
+`pi` manifest in `package.json`. Otherwise load a file with `pi -e ./tabstack.ts`, or drop the file into `~/.pi/agent/extensions/*.ts` (global) or
 `.pi/extensions/*.ts` (project-local) for auto-discovery.
 
 ## How it works internally
@@ -70,10 +71,16 @@ Load it with `pi -e ./tabstack.ts`, or drop the file into `~/.pi/agent/extension
 
 ## Rules specific to this package
 
-- `@earendil-works/pi-coding-agent` (>=0.82.0), `typebox` (^1.3.0), and `zod` (^4.0.0) are **peer
-  dependencies** (+ dev dependencies). Never direct. Zod 4 is required: the adapter uses
-  `z.toJSONSchema`. `@earendil-works/pi-ai` is intentionally not a dependency (nothing is imported
-  from it; the `ToolResult` content shape is a plain object literal).
+- `@earendil-works/pi-coding-agent` and `typebox` are **peer dependencies** with a `"*"` range (+ dev
+  dependencies). Pi supplies both to extensions at runtime, and its packages doc says to declare them
+  this way and never bundle or depend on them directly. `@earendil-works/pi-ai` is intentionally not a
+  dependency (nothing is imported from it; the `ToolResult` content shape is a plain object literal).
+- `zod` (^4.0.0) is a **direct dependency**, unlike the other adapters. Pi installs packages with
+  peer installation disabled (`--legacy-peer-deps` / `--omit=peer`) and does not supply Zod, so a
+  peer `zod` would be missing after `pi install`. Zod 4 is required: the adapter uses `z.toJSONSchema`.
+- The `pi-package` keyword and the `pi.extensions` manifest entry (`./dist/index.js`) are what make
+  `pi install npm:@tabstack/pi-agent` load the extension and list it in the pi.dev package gallery.
+  Do not remove either.
 - `@tabstack/sdk` is a direct dependency.
 - `@tabstack/integrations-core` is a dev dependency, bundled via tsup `noExternal`.
 - No `vitest.config.ts` zod alias is needed: the whole repo is Zod 4 only, so core's dist resolves the

@@ -1,37 +1,50 @@
 # @tabstack/pi-agent
 
-Give the [Pi coding agent](https://pi.dev) reliable web access. Schema-enforced extraction,
-multi-source research, AI transformation, and browser automation, all registered as native Pi tools
-through a Pi extension, backed by the official
-[Tabstack SDK](https://www.npmjs.com/package/@tabstack/sdk).
+Give your model the web without giving up your privacy. Tabstack is a managed web API, and this
+extension registers it as native tools in the [Pi coding agent](https://pi.dev), so your model gets
+finished results from the live web in one call: a cited answer, clean Markdown, matching JSON, or a
+completed public browser task. It is backed by the official [Tabstack SDK](https://www.npmjs.com/package/@tabstack/sdk).
+
+**Never trained on. Private by default. Built by Mozilla.**
 
 ## Why Tabstack
 
-Wiring web access into an agent usually means hand-rolled fetches, HTML parsing, and prompt
-gymnastics to coax structured data out of messy text. Tabstack replaces that with a hosted API:
+Search tools hand your model a list of links. The model still has to pick sources, fetch pages, parse
+HTML, reconcile what it read, and cite it. Tabstack runs that work inside the call and returns the
+result:
 
-- **Schema-enforced output.** Define the shape, get that shape back.
-- **No browser to run.** JS-heavy pages render server-side. No Playwright, no binaries.
-- **Drop-in extension.** A single default export you point the `pi` CLI at.
-- **One key for everything:** extraction, research, generation, and automation.
+- **Cited answers.** `research_question` searches, reads, and reconciles multiple sources, then returns
+  an answer with citations.
+- **Clean text and matching JSON.** Read a URL as clean Markdown, or define a shape and get that shape
+  back.
+- **No browser to run.** JavaScript-heavy pages render server-side. No Playwright, no binaries.
+- **One key** for research, extraction, generation, and public browser tasks.
 
 ## Install
 
 ```bash
-npm install @tabstack/pi-agent @earendil-works/pi-coding-agent typebox zod
+pi install npm:@tabstack/pi-agent
 ```
 
-`@earendil-works/pi-coding-agent` (v0.82 or later), `typebox` (v1), and `zod` (v4) are peer
-dependencies. Set your API key (get one at [console.tabstack.ai](https://console.tabstack.ai)):
+Set your API key (get one at [console.tabstack.ai](https://console.tabstack.ai)):
 
 ```bash
 export TABSTACK_API_KEY="your-key-here"
 ```
 
-## Quickstart
+That's it: Pi loads the extension and registers all five Tabstack tools. To try it for one session
+without adding it to your settings, run `pi -e npm:@tabstack/pi-agent`. Add `--local` (`-l`) to
+`pi install` to record it in the project's `.pi/settings.json` instead of your personal settings.
 
-A Pi extension is a `.ts` file with a default export that Pi calls with its extension API. Re-export
-this package's default extension and Pi registers all five Tabstack tools:
+The tools resolve `TABSTACK_API_KEY` lazily on first call, so loading the extension never requires a
+key to be set.
+
+## Use it from your own extension file
+
+To pin the version in your own code or customize the tools, install it as a dependency
+(`npm install @tabstack/pi-agent`) and use it from a Pi extension file. A Pi extension is a `.ts`
+file with a default export that Pi calls with its extension API. Re-export this package's default
+extension and Pi registers all five Tabstack tools:
 
 ```ts
 // tabstack.ts
@@ -49,9 +62,6 @@ Pi also auto-discovers extensions dropped into either of these locations, no `-e
 - `~/.pi/agent/extensions/*.ts` (global, applies to every project)
 - `.pi/extensions/*.ts` (project-local, checked into the repo)
 
-The tools resolve `TABSTACK_API_KEY` lazily on first call, so loading the extension never requires a
-key to be set.
-
 ## The tools
 
 | Tool name | Label | What it does |
@@ -60,7 +70,7 @@ key to be set.
 | `extract_page_content` | Extract Page Content | Fetch a page as clean markdown. |
 | `research_question` | Research Question | Synthesised answer with cited sources across multiple pages. |
 | `generate_structured_data` | Generate Structured Data | Fetch a page, then AI-transform it into derived or reshaped JSON. |
-| `automate_browser_task` | Automate Browser Task | Run a multi-step, natural-language browser task. |
+| `automate_browser_task` | Automate Browser Task | Run a multi-step, natural-language task on a public website. |
 
 The tool names stay in lockstep with the `@tabstack/langchain`, `@tabstack/openai-agents`,
 `@tabstack/eve`, and Python `langchain-tabstack` packages.
@@ -134,7 +144,8 @@ a tool result rather than aborting the session.
   call (for example a long `research_question` or `automate_browser_task`) aborts the request and stops
   billing, not just the agent loop.
 - **Requires Zod 4.** The adapter uses Zod 4's native `z.toJSONSchema` to derive each tool's Typebox
-  parameters.
+  parameters. Zod is a regular dependency, so `pi install` brings it along.
+- **`automate_browser_task` works on public sites.** It cannot log in or manage sessions.
 
 ## Links
 

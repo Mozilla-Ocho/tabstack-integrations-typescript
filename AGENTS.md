@@ -70,7 +70,9 @@ install is a harmless warning; esbuild and biome get their binaries from optiona
 ## Conventions
 
 - `zod` and the framework (`@langchain/core`, `ai`) are **peer dependencies** in the adapters, so the
-  consumer's single instance is shared. Never make them direct dependencies.
+  consumer's single instance is shared. Never make them direct dependencies. **Exception:**
+  `@tabstack/pi-agent` declares `zod` as a direct dependency, because Pi installs packages with peer
+  installation disabled and does not supply Zod (see `packages/pi-agent/AGENTS.md`).
 - **The whole repo is Zod 4 only.** `core`, every adapter, and every app in `apps/` declare
   `zod: ^4.0.0`. Reasons: the Claude Agent and OpenAI Agents SDKs require Zod 4, the `eve` and
   `pi-agent` adapters use Zod 4's native `z.toJSONSchema`, and core's emitted `.d.ts` is Zod 4 shaped
