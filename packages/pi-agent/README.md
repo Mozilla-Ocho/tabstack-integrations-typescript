@@ -1,9 +1,9 @@
 # @tabstack/pi-agent
 
-Tabstack is a managed web API for models that don't come with the web. This extension registers
-it as native tools in the [Pi coding agent](https://pi.dev), so your model gets finished results from
-the live web in one call: a cited answer, clean Markdown, matching JSON, or a completed public browser
-task. It is backed by the official [Tabstack SDK](https://www.npmjs.com/package/@tabstack/sdk).
+Give your model the web without giving up your privacy. Tabstack is a managed web API, and this
+extension registers it as native tools in the [Pi coding agent](https://pi.dev), so your model gets
+finished results from the live web in one call: a cited answer, clean Markdown, matching JSON, or a
+completed public browser task. It is backed by the official [Tabstack SDK](https://www.npmjs.com/package/@tabstack/sdk).
 
 **Never trained on. Private by default. Built by Mozilla.**
 
