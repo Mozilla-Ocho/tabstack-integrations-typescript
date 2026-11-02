@@ -1,7 +1,7 @@
 {
   "name": "@tabstack/pi-agent",
   "version": "0.1.0",
-  "description": "Tabstack tools for the Pi coding agent as a Pi extension. Schema-enforced web extraction and research, backed by the official Tabstack SDK.",
+  "description": "Tabstack tools for the Pi coding agent as a Pi extension. Cited research, clean page content, JSON that matches your schema, and browser tasks, backed by the official Tabstack SDK.",
   "author": "Tabstack",
   "license": "MIT",
   "repository": {
@@ -38,7 +38,9 @@
     "extension",
     "tools",
     "agent",
-    "web-scraping",
+    "web-research",
+    "web-extraction",
+    "browser-automation",
     "extraction"
   ],
   "dependencies": {

@@ -1,7 +1,7 @@
 {
   "name": "@tabstack/claude-agent",
   "version": "0.1.0",
-  "description": "Tabstack tools for the Claude Agent SDK. Schema-enforced web extraction, research, generation, and browser automation exposed as an in-process MCP server, backed by the official Tabstack SDK.",
+  "description": "Tabstack tools for the Claude Agent SDK. Cited research, clean page content, JSON that matches your schema, and browser tasks, backed by the official Tabstack SDK.",
   "author": "Tabstack",
   "license": "MIT",
   "repository": {
@@ -35,10 +35,11 @@
     "claude",
     "claude-agent-sdk",
     "anthropic",
-    "mcp",
     "tools",
     "agent",
-    "web-scraping",
+    "web-research",
+    "web-extraction",
+    "browser-automation",
     "extraction"
   ],
   "dependencies": {

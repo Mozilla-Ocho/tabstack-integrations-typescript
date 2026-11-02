@@ -1,7 +1,7 @@
 {
   "name": "@tabstack/mastra",
   "version": "0.1.0",
-  "description": "Tabstack tools for the Mastra agent framework. Schema-enforced web extraction and research, backed by the official Tabstack SDK.",
+  "description": "Tabstack tools for the Mastra agent framework. Cited research, clean page content, JSON that matches your schema, and browser tasks, backed by the official Tabstack SDK.",
   "author": "Tabstack",
   "license": "MIT",
   "repository": {
@@ -30,7 +30,16 @@
     "test": "vitest run",
     "prepublishOnly": "pnpm -w run build"
   },
-  "keywords": ["tabstack", "mastra", "tools", "agent", "web-scraping", "extraction"],
+  "keywords": [
+    "tabstack",
+    "mastra",
+    "tools",
+    "agent",
+    "web-research",
+    "web-extraction",
+    "browser-automation",
+    "extraction"
+  ],
   "dependencies": {
     "@tabstack/sdk": "^2.6.1"
   },
