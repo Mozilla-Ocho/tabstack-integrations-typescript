@@ -13,8 +13,12 @@ behaviour that drifts across LangChain releases.
 
 Tabstack replaces them with a hosted API:
 
+- **Cited research.** One call searches live sources and returns a synthesised answer with its
+  citations.
 - **Schema-enforced output.** You define the shape, you get that shape back. No prompt-engineering
   the JSON out of raw text.
+- **Browser tasks.** Natural-language, multi-step web tasks that navigate, fill forms, and pull
+  results across pages.
 - **No browser to run.** JS-heavy pages render server-side. No Playwright, no binaries, no async
   headaches.
 - **Version-independent.** It is an SDK call, not a loader coupled to your LangChain version.

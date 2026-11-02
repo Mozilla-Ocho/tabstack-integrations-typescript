@@ -10,7 +10,11 @@ Private by default. Built by Mozilla.
 Wiring web access into an AI SDK app usually means hand-rolled fetches, HTML parsing, and prompt
 gymnastics to coax structured data out of messy text. Tabstack replaces that with a hosted API:
 
+- **Cited research.** One call searches live sources and returns a synthesised answer with its
+  citations.
 - **Schema-enforced output.** Define the shape with Zod or JSON Schema, get that shape back.
+- **Browser tasks.** Natural-language, multi-step web tasks that navigate, fill forms, and pull
+  results across pages.
 - **No browser to run.** JS-heavy pages render server-side. No Playwright, no binaries.
 - **Drop-in tools.** Typed `tool()` definitions that pass straight to `generateText` / `streamText`.
 - **One key for everything:** research, extraction, generation, and automation.
