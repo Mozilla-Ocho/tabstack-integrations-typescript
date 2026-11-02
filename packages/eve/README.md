@@ -1,7 +1,7 @@
 # @tabstack/eve
 
 Give your [eve](https://vercel.com/eve) agents the web without giving up your privacy. Cited
-research, clean page content, matching JSON, and browser tasks, all as native eve tools, backed by
+research, clean page content, JSON that matches your schema, and browser tasks, all as native eve tools, backed by
 the official [Tabstack SDK](https://www.npmjs.com/package/@tabstack/sdk). Never trained on. Private
 by default. Built by Mozilla.
 

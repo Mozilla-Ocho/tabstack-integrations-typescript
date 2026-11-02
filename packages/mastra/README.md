@@ -1,7 +1,7 @@
 # @tabstack/mastra
 
 Give your [Mastra](https://mastra.ai) agents the web without giving up your privacy. Cited research,
-clean page content, matching JSON, and browser tasks, all as native Mastra tools, backed by the
+clean page content, JSON that matches your schema, and browser tasks, all as native Mastra tools, backed by the
 official [Tabstack SDK](https://www.npmjs.com/package/@tabstack/sdk). Never trained on. Private by
 default. Built by Mozilla.
 

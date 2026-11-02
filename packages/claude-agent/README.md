@@ -1,8 +1,8 @@
 # @tabstack/claude-agent
 
 Give your [Claude Agent SDK](https://code.claude.com/docs/en/agent-sdk/overview) agents the web
-without giving up your privacy. Cited research, clean page content, matching JSON, and browser
-tasks, all as Claude Agent SDK tools, backed by the official
+without giving up your privacy. Cited research, clean page content, JSON that matches your schema, and browser
+tasks, all as native Claude Agent SDK tools, backed by the official
 [Tabstack SDK](https://www.npmjs.com/package/@tabstack/sdk). Never trained on. Private by default.
 Built by Mozilla.
 
@@ -17,7 +17,7 @@ gymnastics to coax structured data out of messy text. Tabstack replaces that wit
 - **Browser tasks.** Natural-language, multi-step web tasks that navigate, fill forms, and pull
   results across pages.
 - **No browser to run.** JS-heavy pages render server-side. No Playwright, no binaries.
-- **Drop-in tools.** One call builds a ready-to-use server for `query()`.
+- **Drop-in server.** Pass the prebuilt `tabstackServer` (or `createTabstackClaudeAgentServer()`) to `query()`'s `mcpServers`.
 - **One key for everything:** research, extraction, generation, and automation.
 
 ## Install

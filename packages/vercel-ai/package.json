@@ -1,7 +1,7 @@
 {
   "name": "@tabstack/ai",
   "version": "0.1.0",
-  "description": "Tabstack tools for the Vercel AI SDK. Cited research, clean page content, matching JSON, and browser tasks, backed by the official Tabstack SDK.",
+  "description": "Tabstack tools for the Vercel AI SDK. Cited research, clean page content, JSON that matches your schema, and browser tasks, backed by the official Tabstack SDK.",
   "author": "Tabstack",
   "license": "MIT",
   "repository": {
