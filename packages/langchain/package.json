@@ -1,7 +1,7 @@
 {
   "name": "@tabstack/langchain",
   "version": "0.1.0",
-  "description": "Tabstack tools for LangChain.js. Schema-enforced web extraction and research, backed by the official Tabstack SDK.",
+  "description": "Tabstack tools for LangChain.js. Cited research, clean page content, matching JSON, and browser tasks, backed by the official Tabstack SDK.",
   "author": "Tabstack",
   "license": "MIT",
   "repository": {
@@ -30,7 +30,16 @@
     "test": "vitest run",
     "prepublishOnly": "pnpm -w run build"
   },
-  "keywords": ["tabstack", "langchain", "tools", "agent", "web-scraping", "extraction"],
+  "keywords": [
+    "tabstack",
+    "langchain",
+    "tools",
+    "agent",
+    "web-research",
+    "web-extraction",
+    "browser-automation",
+    "extraction"
+  ],
   "dependencies": {
     "@tabstack/sdk": "^2.6.1"
   },

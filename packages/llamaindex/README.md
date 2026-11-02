@@ -1,9 +1,10 @@
 # @tabstack/llamaindex
 
-Give your [LlamaIndex.TS](https://developers.llamaindex.ai/typescript) agents reliable web access.
-Schema-enforced extraction, multi-source research, AI transformation, and browser automation, all as
-native LlamaIndex tools backed by the official
-[Tabstack SDK](https://www.npmjs.com/package/@tabstack/sdk).
+Give your [LlamaIndex.TS](https://developers.llamaindex.ai/typescript) agents the web without giving
+up your privacy. Cited research, clean page content, matching JSON, and browser tasks, all as native
+LlamaIndex tools, backed by the official
+[Tabstack SDK](https://www.npmjs.com/package/@tabstack/sdk). Never trained on. Private by default.
+Built by Mozilla.
 
 ## Why Tabstack
 
@@ -13,7 +14,7 @@ gymnastics to coax structured data out of messy text. Tabstack replaces that wit
 - **Schema-enforced output.** Define the shape, get that shape back.
 - **No browser to run.** JS-heavy pages render server-side. No Playwright, no binaries.
 - **Drop-in tools.** Pre-built `tool()` definitions you pass straight to an agent.
-- **One key for everything:** extraction, research, generation, and automation.
+- **One key for everything:** research, extraction, generation, and automation.
 
 ## Install
 

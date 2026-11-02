@@ -1,9 +1,10 @@
 # @tabstack/openai-agents
 
-Give your [OpenAI Agents SDK](https://openai.github.io/openai-agents-js/) agents reliable web
-access. Schema-enforced extraction, multi-source research, AI transformation, and browser
-automation, all as native Agents SDK tools backed by the official
-[Tabstack SDK](https://www.npmjs.com/package/@tabstack/sdk).
+Give your [OpenAI Agents SDK](https://openai.github.io/openai-agents-js/) agents the web without
+giving up your privacy. Cited research, clean page content, matching JSON, and browser tasks, all as
+native Agents SDK tools, backed by the official
+[Tabstack SDK](https://www.npmjs.com/package/@tabstack/sdk). Never trained on. Private by default.
+Built by Mozilla.
 
 ## Why Tabstack
 
@@ -13,7 +14,7 @@ gymnastics to coax structured data out of messy text. Tabstack replaces that wit
 - **Schema-enforced output.** Define the shape, get that shape back.
 - **No browser to run.** JS-heavy pages render server-side. No Playwright, no binaries.
 - **Drop-in tools.** Pre-built `tool()` definitions you hand straight to an `Agent`.
-- **One key for everything:** extraction, research, generation, and automation.
+- **One key for everything:** research, extraction, generation, and automation.
 
 ## Install
 

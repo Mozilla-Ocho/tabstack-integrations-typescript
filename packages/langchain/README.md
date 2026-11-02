@@ -1,8 +1,9 @@
 # @tabstack/langchain
 
-Give your [LangChain.js](https://js.langchain.com) agents reliable web access. Schema-enforced
-extraction, multi-source research, AI transformation, and browser automation, all as native
-LangChain tools backed by the official [Tabstack SDK](https://www.npmjs.com/package/@tabstack/sdk).
+Give your [LangChain.js](https://js.langchain.com) agents the web without giving up your privacy.
+Cited research, clean page content, matching JSON, and browser tasks, all as native LangChain tools,
+backed by the official [Tabstack SDK](https://www.npmjs.com/package/@tabstack/sdk). Never trained
+on. Private by default. Built by Mozilla.
 
 ## Why Tabstack
 
@@ -17,7 +18,7 @@ Tabstack replaces them with a hosted API:
 - **No browser to run.** JS-heavy pages render server-side. No Playwright, no binaries, no async
   headaches.
 - **Version-independent.** It is an SDK call, not a loader coupled to your LangChain version.
-- **One key for everything:** extraction, research, generation, and automation.
+- **One key for everything:** research, extraction, generation, and automation.
 
 ## Install
 

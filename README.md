@@ -2,7 +2,7 @@
 
 Long-term home for every Tabstack TypeScript integration. Each adapter wraps the official Tabstack
 TypeScript SDK ([`@tabstack/sdk`](https://www.npmjs.com/package/@tabstack/sdk)) and exposes Tabstack's
-extract and research capabilities as native tools for a given agent framework.
+research, extract, generate, and automate capabilities as native tools for a given agent framework.
 
 ## Packages
 
