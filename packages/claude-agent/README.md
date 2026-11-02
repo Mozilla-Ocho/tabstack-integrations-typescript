@@ -13,7 +13,7 @@ gymnastics to coax structured data out of messy text. Tabstack replaces that wit
 
 - **Schema-enforced output.** Define the shape, get that shape back.
 - **No browser to run.** JS-heavy pages render server-side. No Playwright, no binaries.
-- **Drop-in MCP server.** One call builds a ready-to-use in-process server for `query()`.
+- **Drop-in tools.** One call builds a ready-to-use server for `query()`.
 - **One key for everything:** research, extraction, generation, and automation.
 
 ## Install
