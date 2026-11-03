@@ -143,7 +143,7 @@ export async function researchQuestion(
     const stream = await client.agent.research(
       {
         query: input.query,
-        mode: input.mode ?? "balanced",
+        mode: input.mode ?? "fast",
         ...(input.nocache !== undefined ? { nocache: input.nocache } : {}),
       },
       requestOptions(options),

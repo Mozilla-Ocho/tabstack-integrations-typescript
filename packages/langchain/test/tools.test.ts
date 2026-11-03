@@ -112,10 +112,7 @@ describe("@tabstack/langchain", () => {
     const research = tools[2];
     if (!research) throw new Error("expected research_question tool");
     const result = await research.invoke({ query: "why?" });
-    expect(client.agent.research).toHaveBeenCalledWith(
-      { query: "why?", mode: "balanced" },
-      undefined,
-    );
+    expect(client.agent.research).toHaveBeenCalledWith({ query: "why?", mode: "fast" }, undefined);
     expect(result).toEqual({
       answer: "The answer.",
       sources: [
@@ -123,6 +120,23 @@ describe("@tabstack/langchain", () => {
         { title: "", url: "https://b.example" },
       ],
     });
+  });
+
+  it("defaults research mode to fast and lets the caller override it", async () => {
+    const client = mockClient();
+    const tools = createTabstackLangchainTools({ client });
+    const research = tools[2];
+    if (!research) throw new Error("expected research_question tool");
+    await research.invoke({ query: "default?" });
+    expect(client.agent.research).toHaveBeenLastCalledWith(
+      { query: "default?", mode: "fast" },
+      undefined,
+    );
+    await research.invoke({ query: "deeper?", mode: "balanced", nocache: true });
+    expect(client.agent.research).toHaveBeenLastCalledWith(
+      { query: "deeper?", mode: "balanced", nocache: true },
+      undefined,
+    );
   });
 
   it("runs generate and passes instructions plus fetch options", async () => {

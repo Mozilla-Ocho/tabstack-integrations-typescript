@@ -97,7 +97,8 @@ The model can pass these for finer control; they are sent to Tabstack only when 
     browser rendering).
   - `nocache`: bypass the cache.
   - `country`: ISO 3166-1 alpha-2 code (for example `"US"`) for geotargeted fetches.
-- `research_question`: `mode` (`"fast"` | `"balanced"`), `nocache`.
+- `research_question`: `mode` (`"fast"` | `"balanced"`, default `"fast"`; `"balanced"` requires a
+  Team or Pro plan), `nocache`.
 
 ## Configuration
 
