@@ -29,7 +29,8 @@ SDK only when provided (so omitting them keeps SDK defaults):
 
 - `extract_structured_data`, `extract_page_content`, `generate_structured_data`: `effort`
   (`min`/`standard`/`max`), `nocache`, `country` (ISO alpha-2 geotargeting).
-- `research_question`: `mode` (`fast`/`balanced`), `nocache`.
+- `research_question`: `mode` (`fast` or `balanced`, which requires a Team or Pro plan), `nocache`.
+  Unlike the other optional inputs, `mode` is always sent: when omitted it is `fast`.
 
 ## Output shapes (cross-language)
 

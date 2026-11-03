@@ -54,7 +54,10 @@ export const researchQuestionSchema = z.object({
   mode: z
     .enum(["fast", "balanced"])
     .optional()
-    .describe('Optional research mode: "fast" (quick) or "balanced" (default, more thorough)'),
+    .describe(
+      'Optional research mode: "fast" (default, quickest and cheapest) or "balanced" ' +
+        "(deeper, more thorough; Team and Pro plans only)",
+    ),
   nocache: nocacheField,
 });
 
