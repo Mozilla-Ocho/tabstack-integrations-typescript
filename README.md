@@ -35,6 +35,13 @@ extract and research capabilities as native tools for a given agent framework.
 `@langchain/tabstack` (the official LangChain-owned listing) is **not** built here. That is a separate
 contribution into the `langchainjs` repository and is out of scope for this monorepo.
 
+## Feedback
+
+Report a problem or request a feature in
+[tabstack-feedback](https://github.com/Mozilla-Ocho/tabstack-feedback/issues/new/choose). Include the package
+name and version and the `x-trace-id` from the failing response when relevant. Never paste API keys or
+personal data into an issue.
+
 ## Development
 
 ```bash
